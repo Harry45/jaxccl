@@ -1,6 +1,6 @@
-# JAX-CCL
+# Differentiable CCL using JAX
 
-CCL Functionalities in JAX
+As a first step, we are using the existing implementations of `jax_cosmo` (see Github repository [here](https://github.com/DifferentiableUniverseInitiative/jax_cosmo)). We are expanding on it to accommodate for more functionalities as implemented in CCL.
 
 ## Running tests
 
