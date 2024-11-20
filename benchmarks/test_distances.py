@@ -7,6 +7,7 @@ from pyccl.modified_gravity import MuSigmaMG
 from jax_cosmo.core import Cosmology
 import jax_cosmo.background as bg
 
+np.set_printoptions(precision=4)
 
 # Set tolerances
 DISTANCES_TOLERANCE = 1e-4
@@ -365,12 +366,6 @@ def compare_distances(z, chi_bench, dm_bench, Omega_v, w0, wa):
     a_not_one = (a != 1).nonzero()
     dm = ccl.distance_modulus(cosmo, a[a_not_one])
     dm_jccl = bg.distance_modulus(cosmo_jax, a[a_not_one])
-
-    print()
-    print(f'ccl       : {dm}' )
-    print(f'jaxccl    : {dm_jccl}')
-    print(f'benchmark : {dm_bench[a_not_one]}')
-    print('-'*50)
 
     assert np.allclose(dm, dm_bench[a_not_one], atol=1e-3, rtol=DISTANCES_TOLERANCE*10)
     assert np.allclose(dm_jccl, dm_bench[a_not_one], atol=1e-3, rtol=DISTANCES_TOLERANCE*10)
