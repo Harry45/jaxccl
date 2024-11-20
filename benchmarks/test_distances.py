@@ -320,8 +320,9 @@ def read_dm_benchmark_file():
 
 # Set-up test data
 z, chi = read_chi_benchmark_file()
-# zhi, chi_hiz = read_chi_hiz_benchmark_file()
 _, dm = read_dm_benchmark_file()
+
+# zhi, chi_hiz = read_chi_hiz_benchmark_file()
 # znu, chi_nu = read_chi_mnu_benchmark_file()
 # znuhi, chi_nu_hiz = read_chi_mnu_hiz_benchmark_file()
 # z_class_mnu, chi_class_mnu = read_class_mnu_chi_benchmark_file()
