@@ -17,6 +17,7 @@ nav:
   - About: about.md
   - Code:
       - Background: background.md
+      - Probes: probes.md
   # - Application: application.md
   # - Emulator:
   #     - Matter: pk.md

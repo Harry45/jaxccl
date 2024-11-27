@@ -1,5 +1,5 @@
 # This module defines kernel functions for various tracers
-from typing import Tuple
+from typing import Tuple, List
 import jax.numpy as np
 from jax import jit
 from jax import vmap
@@ -13,6 +13,7 @@ from jax_cosmo.scipy.integrate import simps
 from jax_cosmo.utils import a2z
 from jax_cosmo.utils import z2a
 from jax_cosmo.core import Cosmology
+from jax_cosmo.redshift import redshift_distribution
 
 __all__ = ["WeakLensing", "NumberCounts"]
 
@@ -79,9 +80,39 @@ def weak_lensing_kernel(cosmo, pzs, z, ell):
 
 
 @jit
-def density_kernel(cosmo, pzs, bias, z, ell):
-    """
-    Computes the number counts density kernel
+def density_kernel(
+    cosmo: Cosmology,
+    pzs: List[redshift_distribution],
+    bias: List[float],
+    z: np.ndarray,
+    ell: np.ndarray
+) -> np.ndarray:
+    r"""
+    Computes the number counts density kernel for a given cosmology, redshift bins,
+    bias, redshift values, and multipole moment.
+
+    Args:
+        cosmo (Cosmology): The cosmology object containing cosmological parameters.
+
+        pzs (List[redshift_distribution]): A list of redshift distribution functions (or objects) for each redshift bin. Each element in the list should be callable and take a redshift `z` as input.
+
+        bias (List[float]): A list of bias functions (or constants) for each redshift bin. If a list of functions is provided, each function should accept `cosmo` and `z` as arguments and return the bias at a given redshift.
+
+        z (np.ndarray): A 1D array of redshift values for which the density kernel will be computed.
+
+        ell (np.ndarray): A 1D array of multipole moments for the kernel computation.
+
+    Returns:
+        np.ndarray: The computed density kernel, with shape `(nbins, nz)` where `nbins` is the number of redshift bins and `nz` is the number of redshift values provided in `z`.
+
+    Raises:
+        NotImplementedError: If any of the redshift distributions are of type `rds.delta_nz`, which is not supported.
+
+    Notes:
+        The density kernel is computed as the product of the redshift distribution `dndz`,
+        the bias function, and the background Hubble parameter at each redshift value.
+        The resulting kernel is then multiplied by normalization and `ell`-dependent factors,
+        though both factors are currently set to `1.0`.
     """
     if any(isinstance(pz, rds.delta_nz) for pz in pzs):
         raise NotImplementedError(
@@ -229,22 +260,47 @@ class WeakLensing(container):
 
 @register_pytree_node_class
 class NumberCounts(container):
-    """Class representing a galaxy clustering probe, with a bunch of bins
+    """
+    Class representing a galaxy clustering probe, with a set of bins.
 
     Parameters:
     -----------
-    redshift_bins: nzredshift distributions
+    redshift_bins : List
+        A list of redshift distributions for each redshift bin.
+
+    bias : float
+        The bias parameter for the galaxy distribution.
+
+    has_rsd : bool, optional
+        A flag indicating whether the redshift space distortion (RSD) effect is included, default is False.
 
     Configuration:
     --------------
-    has_rsd....
+    has_rsd : bool
+        Indicates if redshift space distortion (RSD) is considered.
     """
 
-    def __init__(self, redshift_bins, bias, has_rsd=False, **kwargs):
+    def __init__(self, redshift_bins:List, bias: List, has_rsd: bool=False, **kwargs):
         super(NumberCounts, self).__init__(
             redshift_bins, bias, has_rsd=has_rsd, **kwargs
         )
+        """
+        Initializes the NumberCounts object.
 
+        Args:
+        -----
+        redshift_bins : List
+            A list of redshift distributions.
+
+        bias : float
+            The bias parameter for the galaxy distribution.
+
+        has_rsd : bool, optional
+            A flag indicating whether the redshift space distortion (RSD) effect is included. Defaults to False.
+
+        **kwargs : additional keyword arguments
+            Additional configuration parameters passed to the parent class.
+        """
     @property
     def zmax(self):
         """
