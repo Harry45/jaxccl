@@ -1,5 +1,5 @@
 # This module implements various functions for the background COSMOLOGY
-from typing import Tuple
+from typing import Tuple, Union
 import jax.numpy as np
 from jax import lax
 from jax import jit, grad
@@ -28,101 +28,88 @@ __all__ = [
 ]
 
 
-def w(cosmo, a):
-    r"""Dark Energy equation of state parameter using the Linder
-    parametrisation.
+def w(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    r"""
+    Computes the Dark Energy equation of state parameter using the Linder parametrization.
 
-    Parameters
-    ----------
-    cosmo: Cosmology
-      Cosmological parameters structure
+    Args:
+        cosmo (Cosmology): Cosmological parameters structure containing `w0` and `wa`.
+        a (Union[float, jnp.ndarray]): Scale factor. Can be a scalar or an array.
 
-    a : array_like
-        Scale factor
+    Returns:
+        Union[float, jnp.ndarray]: The Dark Energy equation of state parameter at the specified scale factor.
+        Returns a scalar if the input is a scalar, or an array if the input is an array.
 
-    Returns
-    -------
-    w : ndarray, or float if input scalar
-        The Dark Energy equation of state parameter at the specified
-        scale factor
+    Notes:
+        The Linder parametrization [Linder (2003)](https://arxiv.org/abs/astro-ph/0208512)
+        for the Dark Energy equation of state $p = w \rho$ is given by:
 
-    Notes
-    -----
-    The Linder parametrization [Linder (2003)](https://arxiv.org/abs/astro-ph/0208512) for the Dark Energy
-    equation of state $p = w \rho$ is given by:
-
-    $$
-    w(a) = w_0 + w_a (1 - a)
-    $$
+        $w(a) = w_0 + w_a (1 - a)$
     """
     return cosmo.w0 + (1.0 - a) * cosmo.wa
 
+def f_de(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    r"""Computes the evolution parameter for the Dark Energy density.
 
-def f_de(cosmo, a):
-    r"""Evolution parameter for the Dark Energy density.
+    Args:
+        cosmo (Cosmology): Cosmological parameters structure containing `w0` and `wa`.
+        a (Union[float, np.ndarray]): Scale factor. Can be a scalar or an array.
 
-    Parameters
-    ----------
-    a : array_like
-        Scale factor
+    Returns:
+        Union[float, np.ndarray]: The evolution parameter of the Dark Energy density as a function
+        of the scale factor. Returns a scalar if the input is a scalar, or an array if the input is an array.
 
-    Returns
-    -------
-    f : ndarray, or float if input scalar
-        The evolution parameter of the Dark Energy density as a function
-        of scale factor
+    Notes:
+        For a given parametrization of the Dark Energy equation of state, the scaling of the
+        Dark Energy density with time can be written as:
 
-    Notes
-    -----
-
-    For a given parametrisation of the Dark Energy equation of state,
-    the scaling of the Dark Energy density with time can be written as:
-
-    .. math::
-
+        $$
         \rho_{de}(a) = \rho_{de}(a=1) e^{f(a)}
+        $$
 
-    (see :cite:`2005:Percival` and note the difference in the exponent base
-    in the parametrizations) where :math:`f(a)` is computed as
-    :math:`f(a) = -3 \int_0^{\ln(a)} [1 + w(a')] d \ln(a')`.
-    In the case of Linder's parametrisation for the dark energy
-    in Eq. :eq:`linderParam` :math:`f(a)` becomes:
+        See [Percival (2005)](https://arxiv.org/pdf/astro-ph/0508156) and note the difference in
+        the exponent base in the parametrizations where $f(a)$ is computed as:
 
-    .. math::
+        $$
+        f(a) = -3 \int_0^{\ln(a)} [1 + w(a')] \, d \ln(a')
+        $$
 
+        In the case of Linder's parametrization for the Dark Energy equation of state, $f(a)$ becomes:
+
+        $$
         f(a) = -3 (1 + w_0 + w_a) \ln(a) + 3 w_a (a - 1)
+        $$
     """
     return -3.0 * (1.0 + cosmo.w0 + cosmo.wa) * np.log(a) + 3.0 * cosmo.wa * (a - 1.0)
 
 
-def Esqr(cosmo, a):
-    r"""Square of the scale factor dependent factor E(a) in the Hubble
-    parameter.
+def Esqr(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    r"""
+    Computes the square of the scale-factor-dependent term $E(a)$ in the Hubble parameter.
 
-    Parameters
-    ----------
-    a : array_like
-        Scale factor
+    Args:
+        cosmo (Cosmology): Cosmological model object containing relevant parameters
+            (e.g., matter density, curvature, radiation density).
+        a (Union[float, np.ndarray]): Scale factor. Can be a scalar or an array.
 
-    Returns
-    -------
-    E^2 : ndarray, or float if input scalar
-        Square of the scaling of the Hubble constant as a function of
-        scale factor
+    Returns:
+        Union[float, np.ndarray]: Square of the scaling of the Hubble constant as a function of
+        the scale factor. Returns a scalar if the input is a scalar, or an array if the input is an array.
 
-    Notes
-    -----
+    Notes:
+        The Hubble parameter at scale factor $a$ is given by:
 
-    The Hubble parameter at scale factor `a` is given by
-    :math:`H^2(a) = E^2(a) H_o^2` where :math:`E^2` is obtained through
-    Friedman's Equation (see :cite:`2005:Percival`) :
+        $$
+        H^2(a) = E^2(a) H_0^2
+        $$
 
-    .. math::
+        where $E^2(a)$ is obtained through Friedmann's Equation (see [Percival (2005)](https://arxiv.org/pdf/astro-ph/0508156)):
 
-        E^2(a) = \Omega_m a^{-3} + \Omega_k a^{-2} + \Omega_{de} e^{f(a)}
+        $$
+        E^2(a) = \Omega_m a^{-3} + \Omega_k a^{-2} + (\Omega_g + \Omega_r) a^{-4} + \Omega_{de} e^{f(a)}
+        $$
 
-    where :math:`f(a)` is the Dark Energy evolution parameter computed
-    by :py:meth:`.f_de`.
+        Here, $f(a)$ is the Dark Energy evolution parameter.
     """
     return (
         cosmo.Omega_m * np.power(a, -3)
@@ -132,98 +119,118 @@ def Esqr(cosmo, a):
     )
 
 
-def H(cosmo, a):
-    r"""Hubble parameter [km/s/(Mpc/h)] at scale factor `a`
 
-    Parameters
-    ----------
-    a : array_like
-        Scale factor
+def H(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    r"""
+    Computes the Hubble parameter $H(a)$ at a given scale factor $a$.
 
-    Returns
-    -------
-    H : ndarray, or float if input scalar
-        Hubble parameter at the requested scale factor.
+    Args:
+        cosmo (Cosmology): Cosmological model object containing relevant parameters
+            (e.g., matter density, curvature, radiation density).
+        a (Union[float, np.ndarray]): Scale factor. Can be a scalar or an array.
+
+    Returns:
+        Union[float, np.ndarray]: Hubble parameter at the requested scale factor $a$
+        in units of [km/s/(Mpc/h)]. Returns a scalar if the input is a scalar, or an array if the input is an array.
+
+    Notes:
+        The Hubble parameter is calculated as:
+
+        $$
+        H(a) = H_0 \sqrt{E^2(a)}
+        $$
+
+        where $H_0$ is the Hubble constant in [km/s/(Mpc/h)] and $E^2(a)$ is derived from Friedmann's Equation.
     """
     return const.H0 * np.sqrt(Esqr(cosmo, a))
 
 
-def Omega_m_a(cosmo, a):
-    r"""Matter density at scale factor `a`.
+def Omega_m_a(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    r"""
+    Computes the non-relativistic matter density $\Omega_m(a)$ at a given scale factor $a$.
 
-    Parameters
-    ----------
-    a : array_like
-        Scale factor
+    Args:
+        cosmo (Cosmology): Cosmological model object containing relevant parameters
+            (e.g., matter density, curvature).
+        a (Union[float, np.ndarray]): Scale factor. Can be a scalar or an array.
 
-    Returns
-    -------
-    Omega_m : ndarray, or float if input scalar
-        Non-relativistic matter density at the requested scale factor
+    Returns:
+        Union[float, np.ndarray]: Non-relativistic matter density at the requested scale factor $a$.
+        Returns a scalar if the input is a scalar, or an array if the input is an array.
 
-    Notes
-    -----
-    The evolution of matter density :math:`\Omega_m(a)` is given by:
+    Notes:
+        The evolution of matter density $\Omega_m(a)$ is given by:
 
-    .. math::
-
+        $$
         \Omega_m(a) = \frac{\Omega_m a^{-3}}{E^2(a)}
+        $$
 
-    see :cite:`2005:Percival` Eq. (6)
+        where $\Omega_m$ is the present-day matter density parameter, and $E^2(a)$ is derived from Friedmann's Equation.
+        For more details, see Equation 6 in [Percival (2005)](https://arxiv.org/pdf/astro-ph/0508156).
     """
     return cosmo.Omega_m * np.power(a, -3) / Esqr(cosmo, a)
 
 
-def Omega_de_a(cosmo, a):
-    r"""Dark Energy density at scale factor `a`.
+def Omega_de_a(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    r"""
+    Computes the Dark Energy density $\Omega_{de}(a)$ at a given scale factor $a$.
 
-    Parameters
-    ----------
-    a : array_like
-        Scale factor
+    Args:
+        cosmo (Cosmology): Cosmological model object containing relevant parameters
+            (e.g., Dark Energy density, matter density).
+        a (Union[float, np.ndarray]): Scale factor. Can be a scalar or an array.
 
-    Returns
-    -------
-    Omega_de : ndarray, or float if input scalar
-        Dark Energy density at the requested scale factor
+    Returns:
+        Union[float, np.ndarray]: Dark Energy density at the requested scale factor $a$.
+        Returns a scalar if the input is a scalar, or an array if the input is an array.
 
-    Notes
-    -----
-    The evolution of Dark Energy density :math:`\Omega_{de}(a)` is given
-    by:
+    Notes:
+        The evolution of the Dark Energy density $\Omega_{de}(a)$ is given by:
 
-    .. math::
-
+        $$
         \Omega_{de}(a) = \frac{\Omega_{de} e^{f(a)}}{E^2(a)}
+        $$
 
-    where :math:`f(a)` is the Dark Energy evolution parameter computed by
-    :py:meth:`.f_de` (see :cite:`2005:Percival` Eq. (6)).
+        where $\Omega_{de}$ is the present-day Dark Energy density parameter,
+        $E^2(a)$ is derived from Friedmann's Equation, and $f(a)$ is the Dark Energy evolution parameter.
+
+        For more details, see Equation 6 in [Percival (2005)](https://arxiv.org/pdf/astro-ph/0508156).
     """
     return cosmo.Omega_de * np.exp(f_de(cosmo, a)) / Esqr(cosmo, a)
 
 
-def radial_comoving_distance(cosmo, a, log10_amin=-4, steps=512):
-    r"""Radial comoving distance in [Mpc/h] for a given scale factor.
+def radial_comoving_distance(
+    cosmo: Cosmology,
+    a: Union[float, np.ndarray],
+    log10_amin: float = -4,
+    steps: int = 512
+) -> Union[float, np.ndarray]:
+    r"""
+    Computes the radial comoving distance $\chi(a)$ at a given scale factor $a$.
 
-    Parameters
-    ----------
-    a : array_like
-        Scale factor
+    Args:
+        cosmo (Cosmology): Cosmological model object containing relevant parameters
+            (e.g., Hubble constant, matter density, Dark Energy density).
+        a (Union[float, np.ndarray]): Scale factor. Can be a scalar or an array.
+        log10_amin (float, optional): Logarithm (base 10) of the minimum scale factor to consider.
+            Default is -4, which corresponds to very high redshift.
+        steps (int, optional): Number of integration steps for computing the radial comoving distance.
+            Default is 512.
 
-    Returns
-    -------
-    chi : ndarray, or float if input scalar
-        Radial comoving distance corresponding to the specified scale
-        factor.
+    Returns:
+        Union[float, np.ndarray]: Radial comoving distance $\chi(a)$ corresponding to the specified scale factor $a$.
+        Returns a scalar if the input is a scalar, or an array if the input is an array.
 
-    Notes
-    -----
-    The radial comoving distance is computed by performing the following
-    integration:
+    Notes:
+        The radial comoving distance is computed by performing the following integration:
 
-    .. math::
+        $$
+        \chi(a) = R_H \int_a^1 \frac{da^\prime}{{a^\prime}^2 E(a^\prime)}
+        $$
 
-        \chi(a) =  R_H \int_a^1 \frac{da^\prime}{{a^\prime}^2 E(a^\prime)}
+        where $R_H$ is the Hubble radius, and $E(a)$ is the function dependent on cosmological parameters
+        (calculated from Friedmann's Equation).
+
     """
     # Check if distances have already been computed
     if not "background.radial_comoving_distance" in cosmo._workspace.keys():
@@ -247,71 +254,102 @@ def radial_comoving_distance(cosmo, a, log10_amin=-4, steps=512):
     # Return the results as an interpolation of the table
     return np.clip(interp(a, cache["a"], cache["chi"]), 0.0)
 
-def luminosity_distance(cosmo, a, log10_amin=-4, steps=512):
-    """
+def luminosity_distance(
+    cosmo: Cosmology,
+    a: Union[float, np.ndarray],
+    log10_amin: float = -4,
+    steps: int = 512
+) -> Union[float, np.ndarray]:
+    r"""
     Computes the luminosity distance for a given cosmological model and scale factor.
 
-    Parameters:
-    ----------
-    cosmo : object
-        Cosmological model object containing relevant parameters (e.g., Hubble constant, matter density).
-    a : float
-        Scale factor of the Universe (inverse of 1 + redshift).
-    log10_amin : float, optional
-        Logarithm (base 10) of the minimum scale factor to consider, default is -4 (corresponding to very high redshift).
-    steps : int, optional
-        Number of integration steps for computing the radial comoving distance, default is 512.
+    Args:
+        cosmo (Cosmology): Cosmological model object containing relevant parameters
+            (e.g., Hubble constant, matter density, Dark Energy density).
+        a (Union[float, np.ndarray]): Scale factor of the Universe (inverse of 1 + redshift).
+            Can be a scalar or an array.
+        log10_amin (float, optional): Logarithm (base 10) of the minimum scale factor to consider.
+            Default is -4, which corresponds to very high redshift.
+        steps (int, optional): Number of integration steps for computing the radial comoving distance.
+            Default is 512.
 
     Returns:
-    -------
-    float
-        Luminosity distance in units of Mpc/h (or physical distance divided by the reduced Hubble constant).
+        Union[float, np.ndarray]: Luminosity distance in units of Mpc/h (or physical distance divided by the
+        reduced Hubble constant). Returns a scalar if the input is a scalar, or an array if the input is an array.
+
+    Notes:
+        The luminosity distance is computed by integrating the radial comoving distance and then applying the
+        formula for luminosity distance. It is a measure of the distance to an object based on its luminosity.
+
+        The formula for luminosity distance is typically given by:
+
+        $$
+        D_L(a) = (1 + z) \cdot \chi(a)
+        $$
+
+        where $z = \frac{1}{a} - 1$ is the redshift, and $\chi(a)$ is the radial comoving distance.
     """
     comoving_radial = radial_comoving_distance(cosmo, a, log10_amin, steps) / cosmo.h
     return comoving_radial / a
 
 
-def distance_modulus(cosmo, a, log10_amin=-4, steps=512):
-    """
-    Computes the distance modulus, a measure of the difference between the apparent and absolute magnitudes
+def distance_modulus(
+    cosmo: Cosmology,
+    a: float,
+    log10_amin: float = -4,
+    steps: int = 512,
+) -> float:
+    r"""
+    Computes the distance modulus, which quantifies the difference between the apparent and absolute magnitudes
     of an astronomical object.
 
-    Parameters:
-    ----------
-    cosmo : object
-        Cosmological model object containing relevant parameters (e.g., Hubble constant, matter density).
-    a : float
-        Scale factor of the Universe (inverse of 1 + redshift).
-    log10_amin : float, optional
-        Logarithm (base 10) of the minimum scale factor to consider, default is -4 (corresponding to very high redshift).
-    steps : int, optional
-        Number of integration steps for computing the radial comoving distance, default is 512.
+    Args:
+        cosmo (Cosmology): Cosmological model object containing relevant parameters (e.g., Hubble constant, matter density).
+        a (float): Scale factor of the Universe (inverse of 1 + redshift).
+        log10_amin (float, optional): Logarithm (base 10) of the minimum scale factor to consider.
+            Defaults to -4, corresponding to very high redshift.
+        steps (int, optional): Number of integration steps for computing the radial comoving distance.
+            Defaults to 512.
 
     Returns:
-    -------
-    float
-        Distance modulus in magnitudes, which quantifies the difference between the apparent and absolute
+        float: Distance modulus in magnitudes, which quantifies the difference between the apparent and absolute
         magnitudes of an object.
+
+    Notes:
+        The distance modulus is calculated using the luminosity distance as:
+
+        $$
+        \mu = 5 \log_{10}(d_L \cdot 10) + 20
+        $$
+
+        where $d_L$ is the luminosity distance in megaparsecs.
     """
     lum_dist = luminosity_distance(cosmo, a, log10_amin, steps)
     return 5.0 * np.log10(lum_dist * 10) + 20.0
 
-def a_of_chi(cosmo, chi):
-    r"""Computes the scale factor for corresponding (array) of radial comoving
-    distance by reverse linear interpolation.
+def a_of_chi(
+    cosmo: Cosmology,
+    chi: Union[float, np.ndarray]
+) -> Union[float, np.ndarray]:
+    r"""
+    Computes the scale factor corresponding to a given radial comoving distance $\chi$
+    using reverse linear interpolation.
 
-    Parameters:
-    -----------
-    cosmo: Cosmology
-      Cosmological parameters
-
-    chi: array-like
-      radial comoving distance to query.
+    Args:
+        cosmo (Cosmology): Cosmological model object containing relevant parameters
+            (e.g., Hubble constant, matter density, Dark Energy density).
+        chi (Union[float, np.ndarray]): Radial comoving distance or an array of radial comoving
+            distances to query. Can be a scalar or an array.
 
     Returns:
-    --------
-    a : array-like
-      Scale factors corresponding to requested distances
+        Union[float, np.ndarray]: Scale factor(s) corresponding to the given radial comoving distance(s).
+        Returns a scalar if the input is a scalar, or an array if the input is an array.
+
+    Notes:
+        This function performs reverse linear interpolation to compute the scale factor $a$
+        corresponding to the radial comoving distance(s) $\chi$. The relationship between the
+        scale factor and comoving distance is based on the cosmological model, and the interpolation
+        method allows for efficient calculation for a range of distances.
     """
     # Check if distances have already been computed, force computation otherwise
     if not "background.radial_comoving_distance" in cosmo._workspace.keys():
@@ -321,64 +359,70 @@ def a_of_chi(cosmo, chi):
     return interp(chi, cache["chi"], cache["a"])
 
 
-def dchioverda(cosmo, a):
-    r"""Derivative of the radial comoving distance with respect to the
-    scale factor.
+def dchioverda(
+    cosmo: Cosmology,
+    a: Union[float, np.ndarray]
+) -> Union[float, np.ndarray]:
+    r"""
+    Computes the derivative of the radial comoving distance with respect to the scale factor.
 
-    Parameters
-    ----------
-    a : array_like
-        Scale factor
+    Args:
+        cosmo (Cosmology): Cosmological model object containing relevant parameters
+            (e.g., Hubble constant, matter density, Dark Energy density).
+        a (Union[float, np.ndarray]): Scale factor or an array of scale factors to compute the derivative.
+            Can be a scalar or an array.
 
-    Returns
-    -------
-    dchi/da :  ndarray, or float if input scalar
-        Derivative of the radial comoving distance with respect to the
-        scale factor at the specified scale factor.
+    Returns:
+        Union[float, np.ndarray]: Derivative of the radial comoving distance with respect to the scale factor
+        at the specified scale factor(s). Returns a scalar if the input is a scalar, or an array if the input is an array.
 
-    Notes
-    -----
+    Notes:
+        The expression for the derivative of the radial comoving distance with respect to the scale factor is:
 
-    The expression for :math:`\frac{d \chi}{da}` is:
-
-    .. math::
-
+        $$
         \frac{d \chi}{da}(a) = \frac{R_H}{a^2 E(a)}
+        $$
+
+        where $R_H$ is the Hubble radius, $a$ is the scale factor, and $E(a)$ is the function derived from Friedmann's Equation.
     """
     return const.rh / (a**2 * np.sqrt(Esqr(cosmo, a)))
 
 
-def transverse_comoving_distance(cosmo, a):
-    r"""Transverse comoving distance in [Mpc/h] for a given scale factor.
+def transverse_comoving_distance(
+    cosmo: Cosmology,
+    a: Union[float, np.ndarray]
+) -> Union[float, np.ndarray]:
+    r"""
+    Computes the transverse comoving distance for a given cosmological model and scale factor.
 
-    Parameters
-    ----------
-    a : array_like
-        Scale factor
+    Args:
+        cosmo (Cosmology): Cosmological model object containing relevant parameters
+            (e.g., Hubble constant, matter density, curvature).
+        a (Union[float, np.ndarray]): Scale factor or an array of scale factors to compute the transverse comoving distance.
+            Can be a scalar or an array.
 
-    Returns
-    -------
-    f_k : ndarray, or float if input scalar
-        Transverse comoving distance corresponding to the specified
-        scale factor.
+    Returns:
+        Union[float, np.ndarray]: Transverse comoving distance corresponding to the specified scale factor(s).
+        Returns a scalar if the input is a scalar, or an array if the input is an array.
 
-    Notes
-    -----
-    The transverse comoving distance depends on the curvature of the
-    universe and is related to the radial comoving distance through:
+    Notes:
+        The transverse comoving distance depends on the curvature of the universe and is related to
+        the radial comoving distance ($\chi(a)$) through the following piecewise formula:
 
-    $$
+        $$
         f_k(a) = \left\lbrace
         \begin{matrix}
-        R_H \frac{1}{\sqrt{\Omega_k}}\sinh(\sqrt{|\Omega_k|}\chi(a)R_H)&
-            \mbox{for }\Omega_k > 0 \\
-        \chi(a)&
-            \mbox{for } \Omega_k = 0 \\
-        R_H \frac{1}{\sqrt{\Omega_k}} \sin(\sqrt{|\Omega_k|}\chi(a)R_H)&
-            \mbox{for } \Omega_k < 0
+        R_H \frac{1}{\sqrt{\Omega_k}} \sinh(\sqrt{|\Omega_k|} \chi(a) R_H) & \text{for } \Omega_k > 0 \\
+        \chi(a) & \text{for } \Omega_k = 0 \\
+        R_H \frac{1}{\sqrt{\Omega_k}} \sin(\sqrt{|\Omega_k|} \chi(a) R_H) & \text{for } \Omega_k < 0
         \end{matrix}
         \right.
-    $$
+        $$
+
+        where:
+        - $R_H$ is the Hubble radius.
+        - $\Omega_k$ is the curvature parameter.
+        - $\chi(a)$ is the radial comoving distance at the given scale factor $a$.
     """
     index = cosmo.k + 1
 
@@ -398,95 +442,103 @@ def transverse_comoving_distance(cosmo, a):
     return lax.switch(cosmo.k + 1, branches, chi)
 
 
-def angular_diameter_distance(cosmo, a):
-    r"""Angular diameter distance in [Mpc/h] for a given scale factor.
+def angular_diameter_distance(
+    cosmo: Cosmology,
+    a: Union[float, np.ndarray]
+) -> Union[float, np.ndarray]:
+    r"""
+    Computes the angular diameter distance for a given cosmological model and scale factor.
 
-    Parameters
-    ----------
-    a : array_like
-        Scale factor
+    Args:
+        cosmo (Cosmology): Cosmological model object containing relevant parameters
+            (e.g., Hubble constant, matter density, curvature).
+        a (Union[float, np.ndarray]): Scale factor or an array of scale factors to compute the angular diameter distance.
+            Can be a scalar or an array.
 
-    Returns
-    -------
-    d_A : ndarray, or float if input scalar
+    Returns:
+        Union[float, np.ndarray]: Angular diameter distance corresponding to the specified scale factor(s).
+        Returns a scalar if the input is a scalar, or an array if the input is an array.
 
-    Notes
-    -----
-    Angular diameter distance is expressed in terms of the transverse
-    comoving distance as:
+    Notes:
+        The angular diameter distance is expressed in terms of the transverse comoving distance as:
 
-    .. math::
-
+        $$
         d_A(a) = a f_k(a)
+        $$
+
+        where:
+
+        - $a$ is the scale factor.
+
+        - $f_k(a)$ is the transverse comoving distance at the given scale factor $a$,
+          which depends on the curvature of the universe.
     """
     return a * transverse_comoving_distance(cosmo, a)
 
 
-def growth_factor(cosmo, a):
-    r"""Compute linear growth factor D(a) at a given scale factor,
-    normalized such that D(a=1) = 1.
+def growth_factor(
+    cosmo: Cosmology,
+    a: Union[float, np.ndarray]
+) -> Union[float, np.ndarray]:
+    r"""
+    Computes the linear growth factor $D(a)$ at a given scale factor,
+    normalized such that $D(a=1) = 1$.
 
-    Parameters
-    ----------
-    cosmo: `Cosmology`
-      Cosmology object
+    Args:
+        cosmo (Cosmology): Cosmology object containing relevant parameters
+            (e.g., matter density, Hubble constant, growth rate parameters).
+        a (Union[float, np.ndarray]): Scale factor or an array of scale factors
+            to compute the growth factor at. Can be a scalar or an array.
 
-    a: array_like
-      Scale factor
+    Returns:
+        Union[float, np.ndarray]: Growth factor computed at the requested scale factor(s).
+        Returns a scalar if the input is a scalar, or an array if the input is an array.
 
-    Returns
-    -------
-    D:  ndarray, or float if input scalar
-        Growth factor computed at requested scale factor
-
-    Notes
-    -----
-    The growth computation will depend on the cosmology parametrization, for
-    instance if the $\gamma$ parameter is defined, the growth will be computed
-    assuming the $f = \Omega^\gamma$ growth rate, otherwise the usual ODE for
-    growth will be solved.
+    Notes:
+        The computation of the growth factor depends on the cosmological model and its parameters.
+        If the $\gamma$ parameter is defined in the cosmology model, the growth factor is computed
+        assuming the $f = \Omega^\gamma$ growth rate. Otherwise, the usual ordinary differential equation
+        (ODE) for growth will be solved to compute the growth factor.
     """
+
     if cosmo._flags["gamma_growth"]:
         return _growth_factor_gamma(cosmo, a)
     else:
         return _growth_factor_ODE(cosmo, a)
 
 
-def growth_rate(cosmo, a):
-    r"""Compute growth rate dD/dlna at a given scale factor.
+def growth_rate(
+    cosmo: Cosmology,
+    a: Union[float, np.ndarray]
+) -> Union[float, np.ndarray]:
+    r"""
+    Computes the growth rate $dD/d\ln a$ at a given scale factor.
 
-    Parameters
-    ----------
-    cosmo: `Cosmology`
-      Cosmology object
+    Args:
+        cosmo (Cosmology): Cosmology object containing relevant parameters
+            (e.g., matter density, Hubble constant, growth rate parameters).
+        a (Union[float, np.ndarray]): Scale factor or an array of scale factors
+            to compute the growth rate at. Can be a scalar or an array.
 
-    a: array_like
-      Scale factor
+    Returns:
+        Union[float, np.ndarray]: Growth rate computed at the requested scale factor(s).
+        Returns a scalar if the input is a scalar, or an array if the input is an array.
 
-    Returns
-    -------
-    f:  ndarray, or float if input scalar
-        Growth rate computed at requested scale factor
+    Notes:
+        The computation of the growth rate depends on the cosmological model and its parameters.
+        If the $\gamma$ parameter is defined in the cosmology model, the growth rate is computed
+        assuming the $f = \Omega^\gamma$ growth rate model. Otherwise, the usual ordinary differential
+        equation (ODE) for growth will be solved to compute the growth rate.
 
-    Notes
-    -----
-    The growth computation will depend on the cosmology parametrization, for
-    instance if the $\gamma$ parameter is defined, the growth will be computed
-    assuming the $f = \Omega^\gamma$ growth rate, otherwise the usual ODE for
-    growth will be solved.
+        The LCDM approximation to the growth rate $f_{\gamma}(a)$ is given by:
 
-    The LCDM approximation to the growth rate :math:`f_{\gamma}(a)` is given by:
+        $$
+        f_{\gamma}(a) = \Omega_m^{\gamma}(a)
+        $$
 
-    .. math::
+        where $\gamma$ in LCDM is approximately given by $\gamma \approx 0.55$.
 
-        f_{\gamma}(a) = \Omega_m^{\gamma} (a)
-
-     with :math: `\gamma` in LCDM, given approximately by:
-     .. math::
-
-        \gamma = 0.55
-
-    see :cite:`2019:Euclid Preparation VII, eqn.32`
+        For more details, see Equation 32 in [2019:Euclid Preparation VII (2019)](https://arxiv.org/abs/1910.09273).
     """
     if cosmo._flags["gamma_growth"]:
         return _growth_rate_gamma(cosmo, a)
@@ -498,7 +550,7 @@ def grad_H(cosmo: Cosmology, a: float) -> np.array:
     """Calculates the first derivative of the Hubble parameter at scale factor a.
 
     Args:
-        cosmo (Cosmology): a Cosmology object
+        cosmo (Cosmology): Cosmology object
         a (float): the scale factor a
 
     Returns:
@@ -509,19 +561,20 @@ def grad_H(cosmo: Cosmology, a: float) -> np.array:
 
 def alpha_beta(cosmo: Cosmology, a: float) -> np.array:
     """Calculates the matrix which maps the first derivative and the answer we want, that is,
-
+    $$
     y' = A y
+    $$
 
-    y' is a vector which contains g'(a) and g"(a) while y is a vector which contains g(a) and g'(a).
+    $y'$ is a vector which contains $g'(a)$ and $g"(a)$ while $y$ is a vector which contains $g(a)$ and $g'(a)$.
 
-    A is the matrix we calculate here and we call -A[1,0] as beta and -A[1,1] as alpha.
+    $A$ is the matrix we calculate here and we call $-A[1,0]$ as beta and $-A[1,1]$ as alpha.
 
     Args:
         cosmo (Cosmology): a Cosmology object
         a (float): the scale factor
 
     Returns:
-        np.array: the matrix A according to the equation described above.
+        np.array: the matrix $A$ according to the equation described above.
     """
     gH_over_H = grad_H(cosmo, a) / H(cosmo, a)
     alpha = 5.0 / a + gH_over_H
@@ -529,22 +582,40 @@ def alpha_beta(cosmo: Cosmology, a: float) -> np.array:
     return np.array([[0.0, 1.0], [-beta, -alpha]])
 
 
-def _growth_factor_ODE(cosmo, a, log10_amin=-3, steps=128, eps=1e-4):
-    """Compute linear growth factor D(a) at a given scale factor,
-    normalised such that D(a=1) = 1.
+def _growth_factor_ODE(
+    cosmo: Cosmology,
+    a: Union[float, np.ndarray],
+    log10_amin: float = -3,
+    steps: int = 128,
+    eps: float = 1e-4
+) -> Union[float, np.ndarray]:
+    r"""
+    Computes the linear growth factor $D(a)$ at a given scale factor,
+    normalized such that $D(a=1) = 1$ using the ODE method.
 
-    Parameters
-    ----------
-    a: array_like
-      Scale factor
+    Args:
+        cosmo (Cosmology): Cosmology object containing relevant parameters
+            (e.g., Hubble constant, matter density, and other cosmological parameters).
+        a (Union[float, np.ndarray]): Scale factor or an array of scale factors
+            for which the growth factor is computed. Can be a scalar or an array.
+        log10_amin (float, optional): Minimum scale factor in log10, default is -3 (corresponding to scale factor $a = 10^{-3}$).
+        steps (int, optional): Number of integration steps to be used for solving the ODE, default is 128.
+        eps (float, optional): Tolerance for the ODE solver, default is 1e-4.
 
-    amin: float
-      Mininum scale factor, default 1e-3
+    Returns:
+        Union[float, np.ndarray]: Growth factor $D(a)$ at the requested scale factor(s).
+        Returns a scalar if the input scale factor is a scalar, or an array if the input is an array.
 
-    Returns
-    -------
-    D:  ndarray, or float if input scalar
-        Growth factor computed at requested scale factor
+    Notes:
+        The linear growth factor $D(a)$ is computed by solving the ordinary differential equation (ODE)
+        for the growth factor, with the boundary condition that $D(a=1) = 1$. The method uses an
+        integration technique with the specified tolerance (`eps`) and the number of steps (`steps`).
+
+        The scale factor range is determined by the parameter `log10_amin`, where the minimum scale
+        factor is given by $a_{min} = 10^{\text{log10\_amin}}$.
+
+        This function is used to compute the growth factor at various scale factors in a cosmological model.
+
     """
     # Check if growth has already been computed
     if not "background.growth_factor" in cosmo._workspace.keys():
@@ -577,22 +648,36 @@ def _growth_factor_ODE(cosmo, a, log10_amin=-3, steps=128, eps=1e-4):
     return np.clip(interp(a, cache["a"], cache["g"]), 0.0, 1.0)
 
 
-def _growth_rate_ODE(cosmo, a):
-    """Compute growth rate dD/dlna at a given scale factor by solving the linear
-    growth ODE.
+def _growth_rate_ODE(
+    cosmo: Cosmology,
+    a: Union[float, np.ndarray]
+) -> Union[float, np.ndarray]:
+    r"""
+    Computes the growth rate $dD/d\ln(a)$ at a given scale factor by solving the
+    linear growth ODE.
 
-    Parameters
-    ----------
-    cosmo: `Cosmology`
-      Cosmology object
+    Args:
+        cosmo (Cosmology): Cosmology object containing relevant parameters
+            (e.g., Hubble constant, matter density, and other cosmological parameters).
+        a (Union[float, np.ndarray]): Scale factor or an array of scale factors
+            for which the growth rate is computed. Can be a scalar or an array.
 
-    a: array_like
-      Scale factor
+    Returns:
+        Union[float, np.ndarray]: Growth rate $dD/d\ln(a)$ at the requested scale factor(s).
+        Returns a scalar if the input scale factor is a scalar, or an array if the input is an array.
 
-    Returns
-    -------
-    f:  ndarray, or float if input scalar
-        Growth rate computed at requested scale factor
+    Notes:
+        The growth rate is computed by solving the ordinary differential equation (ODE)
+        for the linear growth factor $D(a)$. The equation for the growth rate is given by:
+
+        $$
+        f(a) = \frac{dD}{d\ln(a)}
+        $$
+
+        The method assumes the cosmology parameters are provided through the `cosmo` object,
+        which includes quantities like the Hubble constant, matter density, etc. The growth rate
+        will be computed according to the specific cosmological model used.
+
     """
     # Check if growth has already been computed, if not, compute it
     if not "background.growth_factor" in cosmo._workspace.keys():
@@ -601,23 +686,40 @@ def _growth_rate_ODE(cosmo, a):
     return interp(a, cache["a"], cache["f"])
 
 
-def _growth_factor_gamma(cosmo, a, log10_amin=-3, steps=128):
-    r"""Computes growth factor by integrating the growth rate provided by the
-    \gamma parametrization. Normalized such that D( a=1) =1
+def _growth_factor_gamma(
+    cosmo: Cosmology,
+    a: Union[float, np.ndarray],
+    log10_amin: float = -3,
+    steps: int = 128
+) -> Union[float, np.ndarray]:
+    r"""
+    Computes the growth factor by integrating the growth rate provided by the
+    $\gamma$ parametrization, normalized such that $D(a=1) = 1$.
 
-    Parameters
-    ----------
-    a: array_like
-      Scale factor
+    Args:
+        cosmo (Cosmology): Cosmology object containing relevant parameters
+            (e.g., Hubble constant, matter density, and other cosmological parameters).
+        a (Union[float, np.ndarray]): Scale factor or an array of scale factors
+            for which the growth factor is computed. Can be a scalar or an array.
+        log10_amin (float, optional): Logarithm (base 10) of the minimum scale factor to
+            consider for integration. Default is -3, corresponding to a very high redshift.
+        steps (int, optional): Number of integration steps to use for computing the growth
+            factor. Default is 128.
 
-    amin: float
-      Mininum scale factor, default 1e-3
+    Returns:
+        Union[float, np.ndarray]: Growth factor computed at the requested scale factor(s).
+        Returns a scalar if the input scale factor is a scalar, or an array if the input is an array.
 
-    Returns
-    -------
-    D:  ndarray, or float if input scalar
-        Growth factor computed at requested scale factor
+    Notes:
+        The growth factor is computed by integrating the growth rate function provided by the
+        $\gamma$ parametrization. The growth rate $f_{\gamma}(a)$ is given by:
 
+        $$
+        f_{\gamma}(a) = \Omega_m^\gamma (a)
+        $$
+
+        where $\gamma$ is a parameter of the cosmological model. The growth factor is
+        normalized such that $D(a=1) = 1$.
     """
     # Check if growth has already been computed, if not, compute it
     if not "background.growth_factor" in cosmo._workspace.keys():
@@ -637,36 +739,34 @@ def _growth_factor_gamma(cosmo, a, log10_amin=-3, steps=128):
     return np.clip(interp(a, cache["a"], cache["g"]), 0.0, 1.0)
 
 
-def _growth_rate_gamma(cosmo, a):
-    r"""Growth rate approximation at scale factor `a`.
+def _growth_rate_gamma(
+    cosmo: Cosmology,
+    a: Union[float, np.ndarray]
+) -> Union[float, np.ndarray]:
+    r"""
+    Computes the growth rate approximation at the given scale factor, $a$.
 
-    Parameters
-    ----------
-    cosmo: `Cosmology`
-        Cosmology object
+    Args:
+        cosmo (Cosmology): Cosmology object containing relevant parameters
+            (e.g., Hubble constant, matter density, and other cosmological parameters).
+        a (Union[float, np.ndarray]): Scale factor or an array of scale factors
+            at which the growth rate is computed. Can be a scalar or an array.
 
-    a : array_like
-        Scale factor
+    Returns:
+        Union[float, np.ndarray]: Growth rate approximation computed at the requested scale factor(s).
+        Returns a scalar if the input scale factor is a scalar, or an array if the input is an array.
 
-    Returns
-    -------
-    f_gamma : ndarray, or float if input scalar
-        Growth rate approximation at the requested scale factor
+    Notes:
+        The LCDM approximation to the growth rate $f_{\gamma}(a)$ is given by:
 
-    Notes
-    -----
-    The LCDM approximation to the growth rate :math:`f_{\gamma}(a)` is given by:
-
-    .. math::
-
+        $$
         f_{\gamma}(a) = \Omega_m^{\gamma} (a)
+        $$
 
-     with :math: `\gamma` in LCDM, given approximately by:
-     .. math::
+        where $\gamma$ is a parameter of the cosmological model. In the LCDM cosmology,
+        $\gamma$ is approximately $0.55$.
 
-        \gamma = 0.55
-
-    see :cite:`2019:Euclid Preparation VII, eqn.32`
+        See Equation 32 in [2019:Euclid Preparation VII (2019)](https://arxiv.org/abs/1910.09273).
     """
     return Omega_m_a(cosmo, a) ** cosmo.gamma
 
