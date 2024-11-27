@@ -1,0 +1,84 @@
+site_name: JAXCCL
+# site_url: https://harry45.github.io/CosmoCruncher/
+site_author: Dr. Arrykrishna Mootoovaloo
+site_description: >-
+  Differentiable CCL using JAX.
+
+# Repository
+# repo_name: CosmoCruncher
+# repo_url: https://github.com/Harry45/CosmoCruncher
+
+# Run at a specific address on local machine
+dev_addr: 127.0.0.1:8006
+
+# Navigations
+nav:
+  - Home: index.md
+  - About: about.md
+  - Code:
+      - Background: background.md
+  # - Application: application.md
+  # - Emulator:
+  #     - Matter: pk.md
+  #     - CMB: cmb.md
+  #     - Weak Lensing: wl.md
+  #     - Ecosystem: ecosystem.md
+  #     - Custom: custom.md
+  - Contact: contact.md
+
+# Configuration
+theme:
+  name: material
+  custom_dir: docs/overrides
+  features:
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.code.select
+    - content.footnote.tooltips
+    - content.tabs.link
+    - content.tooltips
+    - header.autohide
+    - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.prune
+    - navigation.sections
+    - navigation.tabs
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+  font:
+    text: Outfit
+    code: Roboto Mono
+  icon:
+    logo: cc-logo-2
+  favicon: assets/cc-logo-2.ico
+
+# plugins
+plugins:
+  - search
+  - mkdocstrings
+
+# Extensions
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.magiclink
+
+# Extra Javascript
+extra_javascript:
+  - docs/javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+# Remove footer
+extra:
+  generator: false

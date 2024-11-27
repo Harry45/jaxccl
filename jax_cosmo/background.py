@@ -48,15 +48,14 @@ def w(cosmo, a):
 
     Notes
     -----
+    The Linder parametrization [Linder (2003)](https://arxiv.org/abs/astro-ph/0208512) for the Dark Energy
+    equation of state $p = w \rho$ is given by:
 
-    The Linder parametrization :cite:`2003:Linder` for the Dark Energy
-    equation of state :math:`p = w \rho` is given by:
-
-    .. math::
-
-        w(a) = w_0 + w_a (1 - a)
+    $$
+    w(a) = w_0 + w_a (1 - a)
+    $$
     """
-    return cosmo.w0 + (1.0 - a) * cosmo.wa  # Equation (6) in Linder (2003)
+    return cosmo.w0 + (1.0 - a) * cosmo.wa
 
 
 def f_de(cosmo, a):
@@ -368,8 +367,7 @@ def transverse_comoving_distance(cosmo, a):
     The transverse comoving distance depends on the curvature of the
     universe and is related to the radial comoving distance through:
 
-    .. math::
-
+    $$
         f_k(a) = \left\lbrace
         \begin{matrix}
         R_H \frac{1}{\sqrt{\Omega_k}}\sinh(\sqrt{|\Omega_k|}\chi(a)R_H)&
@@ -380,6 +378,7 @@ def transverse_comoving_distance(cosmo, a):
             \mbox{for } \Omega_k < 0
         \end{matrix}
         \right.
+    $$
     """
     index = cosmo.k + 1
 
