@@ -25,6 +25,8 @@ __all__ = [
     "angular_diameter_distance",
     "growth_factor",
     "growth_rate",
+    "distance_modulus",
+    "luminosity_distance"
 ]
 
 
@@ -37,8 +39,7 @@ def w(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarray]
         a (Union[float, jnp.ndarray]): Scale factor. Can be a scalar or an array.
 
     Returns:
-        Union[float, jnp.ndarray]: The Dark Energy equation of state parameter at the specified scale factor.
-        Returns a scalar if the input is a scalar, or an array if the input is an array.
+        The Dark Energy equation of state parameter at the specified scale factor. Returns a scalar if the input is a scalar, or an array if the input is an array.
 
     Notes:
         The Linder parametrization [Linder (2003)](https://arxiv.org/abs/astro-ph/0208512)
@@ -56,8 +57,7 @@ def f_de(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarr
         a (Union[float, np.ndarray]): Scale factor. Can be a scalar or an array.
 
     Returns:
-        Union[float, np.ndarray]: The evolution parameter of the Dark Energy density as a function
-        of the scale factor. Returns a scalar if the input is a scalar, or an array if the input is an array.
+        The evolution parameter of the Dark Energy density as a function of the scale factor. Returns a scalar if the input is a scalar, or an array if the input is an array.
 
     Notes:
         For a given parametrization of the Dark Energy equation of state, the scaling of the
@@ -93,8 +93,7 @@ def Esqr(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarr
         a (Union[float, np.ndarray]): Scale factor. Can be a scalar or an array.
 
     Returns:
-        Union[float, np.ndarray]: Square of the scaling of the Hubble constant as a function of
-        the scale factor. Returns a scalar if the input is a scalar, or an array if the input is an array.
+        Square of the scaling of the Hubble constant as a function of the scale factor. Returns a scalar if the input is a scalar, or an array if the input is an array.
 
     Notes:
         The Hubble parameter at scale factor $a$ is given by:
@@ -130,8 +129,7 @@ def H(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarray]
         a (Union[float, np.ndarray]): Scale factor. Can be a scalar or an array.
 
     Returns:
-        Union[float, np.ndarray]: Hubble parameter at the requested scale factor $a$
-        in units of [km/s/(Mpc/h)]. Returns a scalar if the input is a scalar, or an array if the input is an array.
+        Hubble parameter at the requested scale factor $a$ in units of [km/s/(Mpc/h)]. Returns a scalar if the input is a scalar, or an array if the input is an array.
 
     Notes:
         The Hubble parameter is calculated as:
@@ -155,8 +153,7 @@ def Omega_m_a(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.
         a (Union[float, np.ndarray]): Scale factor. Can be a scalar or an array.
 
     Returns:
-        Union[float, np.ndarray]: Non-relativistic matter density at the requested scale factor $a$.
-        Returns a scalar if the input is a scalar, or an array if the input is an array.
+        Non-relativistic matter density at the requested scale factor $a$. Returns a scalar if the input is a scalar, or an array if the input is an array.
 
     Notes:
         The evolution of matter density $\Omega_m(a)$ is given by:
@@ -181,8 +178,7 @@ def Omega_de_a(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np
         a (Union[float, np.ndarray]): Scale factor. Can be a scalar or an array.
 
     Returns:
-        Union[float, np.ndarray]: Dark Energy density at the requested scale factor $a$.
-        Returns a scalar if the input is a scalar, or an array if the input is an array.
+        Dark Energy density at the requested scale factor $a$. Returns a scalar if the input is a scalar, or an array if the input is an array.
 
     Notes:
         The evolution of the Dark Energy density $\Omega_{de}(a)$ is given by:
@@ -218,8 +214,7 @@ def radial_comoving_distance(
             Default is 512.
 
     Returns:
-        Union[float, np.ndarray]: Radial comoving distance $\chi(a)$ corresponding to the specified scale factor $a$.
-        Returns a scalar if the input is a scalar, or an array if the input is an array.
+        Radial comoving distance $\chi(a)$ corresponding to the specified scale factor $a$. Returns a scalar if the input is a scalar, or an array if the input is an array.
 
     Notes:
         The radial comoving distance is computed by performing the following integration:
@@ -274,8 +269,7 @@ def luminosity_distance(
             Default is 512.
 
     Returns:
-        Union[float, np.ndarray]: Luminosity distance in units of Mpc/h (or physical distance divided by the
-        reduced Hubble constant). Returns a scalar if the input is a scalar, or an array if the input is an array.
+        Luminosity distance in units of Mpc/h (or physical distance divided by the reduced Hubble constant). Returns a scalar if the input is a scalar, or an array if the input is an array.
 
     Notes:
         The luminosity distance is computed by integrating the radial comoving distance and then applying the
@@ -312,8 +306,7 @@ def distance_modulus(
             Defaults to 512.
 
     Returns:
-        float: Distance modulus in magnitudes, which quantifies the difference between the apparent and absolute
-        magnitudes of an object.
+        Distance modulus in magnitudes, which quantifies the difference between the apparent and absolute magnitudes of an object.
 
     Notes:
         The distance modulus is calculated using the luminosity distance as:
@@ -342,8 +335,7 @@ def a_of_chi(
             distances to query. Can be a scalar or an array.
 
     Returns:
-        Union[float, np.ndarray]: Scale factor(s) corresponding to the given radial comoving distance(s).
-        Returns a scalar if the input is a scalar, or an array if the input is an array.
+        Scale factor(s) corresponding to the given radial comoving distance(s). Returns a scalar if the input is a scalar, or an array if the input is an array.
 
     Notes:
         This function performs reverse linear interpolation to compute the scale factor $a$
@@ -373,8 +365,7 @@ def dchioverda(
             Can be a scalar or an array.
 
     Returns:
-        Union[float, np.ndarray]: Derivative of the radial comoving distance with respect to the scale factor
-        at the specified scale factor(s). Returns a scalar if the input is a scalar, or an array if the input is an array.
+        Derivative of the radial comoving distance with respect to the scale factor at the specified scale factor(s). Returns a scalar if the input is a scalar, or an array if the input is an array.
 
     Notes:
         The expression for the derivative of the radial comoving distance with respect to the scale factor is:
@@ -402,8 +393,7 @@ def transverse_comoving_distance(
             Can be a scalar or an array.
 
     Returns:
-        Union[float, np.ndarray]: Transverse comoving distance corresponding to the specified scale factor(s).
-        Returns a scalar if the input is a scalar, or an array if the input is an array.
+        Transverse comoving distance corresponding to the specified scale factor(s). Returns a scalar if the input is a scalar, or an array if the input is an array.
 
     Notes:
         The transverse comoving distance depends on the curvature of the universe and is related to
@@ -456,8 +446,7 @@ def angular_diameter_distance(
             Can be a scalar or an array.
 
     Returns:
-        Union[float, np.ndarray]: Angular diameter distance corresponding to the specified scale factor(s).
-        Returns a scalar if the input is a scalar, or an array if the input is an array.
+        Angular diameter distance corresponding to the specified scale factor(s). Returns a scalar if the input is a scalar, or an array if the input is an array.
 
     Notes:
         The angular diameter distance is expressed in terms of the transverse comoving distance as:
@@ -491,8 +480,7 @@ def growth_factor(
             to compute the growth factor at. Can be a scalar or an array.
 
     Returns:
-        Union[float, np.ndarray]: Growth factor computed at the requested scale factor(s).
-        Returns a scalar if the input is a scalar, or an array if the input is an array.
+        Growth factor computed at the requested scale factor(s). Returns a scalar if the input is a scalar, or an array if the input is an array.
 
     Notes:
         The computation of the growth factor depends on the cosmological model and its parameters.
@@ -521,8 +509,7 @@ def growth_rate(
             to compute the growth rate at. Can be a scalar or an array.
 
     Returns:
-        Union[float, np.ndarray]: Growth rate computed at the requested scale factor(s).
-        Returns a scalar if the input is a scalar, or an array if the input is an array.
+        Growth rate computed at the requested scale factor(s). Returns a scalar if the input is a scalar, or an array if the input is an array.
 
     Notes:
         The computation of the growth rate depends on the cosmological model and its parameters.
@@ -546,20 +533,23 @@ def growth_rate(
         return _growth_rate_ODE(cosmo, a)
 
 
-def grad_H(cosmo: Cosmology, a: float) -> np.array:
+def grad_H(cosmo: Cosmology, a: Union[float, np.ndarray]) -> np.ndarray:
     """Calculates the first derivative of the Hubble parameter at scale factor a.
 
     Args:
-        cosmo (Cosmology): Cosmology object
-        a (float): the scale factor a
+        cosmo (Cosmology): Cosmology object containing relevant parameters
+            (e.g., matter density, Hubble constant, growth rate parameters).
+        a (Union[float, np.ndarray]): Scale factor or an array of scale factors
+            to compute the growth rate at. Can be a scalar or an array.
 
     Returns:
-        np.array: derivative of the Hubble parameter with respect to a
+        Derivative of the Hubble parameter with respect to a
     """
     return grad(H, argnums=1)(cosmo, a)
 
 
-def alpha_beta(cosmo: Cosmology, a: float) -> np.array:
+
+def alpha_beta(cosmo: Cosmology, a: Union[float, np.ndarray]) -> np.ndarray:
     """Calculates the matrix which maps the first derivative and the answer we want, that is,
     $$
     y' = A y
@@ -570,11 +560,13 @@ def alpha_beta(cosmo: Cosmology, a: float) -> np.array:
     $A$ is the matrix we calculate here and we call $-A[1,0]$ as beta and $-A[1,1]$ as alpha.
 
     Args:
-        cosmo (Cosmology): a Cosmology object
-        a (float): the scale factor
+        cosmo (Cosmology): Cosmology object containing relevant parameters
+            (e.g., matter density, Hubble constant, growth rate parameters).
+        a (Union[float, np.ndarray]): Scale factor or an array of scale factors
+            to compute the growth rate at. Can be a scalar or an array.
 
     Returns:
-        np.array: the matrix $A$ according to the equation described above.
+        The matrix $A$ according to the equation described above.
     """
     gH_over_H = grad_H(cosmo, a) / H(cosmo, a)
     alpha = 5.0 / a + gH_over_H
@@ -603,8 +595,7 @@ def _growth_factor_ODE(
         eps (float, optional): Tolerance for the ODE solver, default is 1e-4.
 
     Returns:
-        Union[float, np.ndarray]: Growth factor $D(a)$ at the requested scale factor(s).
-        Returns a scalar if the input scale factor is a scalar, or an array if the input is an array.
+        Growth factor $D(a)$ at the requested scale factor(s). Returns a scalar if the input scale factor is a scalar, or an array if the input is an array.
 
     Notes:
         The linear growth factor $D(a)$ is computed by solving the ordinary differential equation (ODE)
@@ -663,8 +654,7 @@ def _growth_rate_ODE(
             for which the growth rate is computed. Can be a scalar or an array.
 
     Returns:
-        Union[float, np.ndarray]: Growth rate $dD/d\ln(a)$ at the requested scale factor(s).
-        Returns a scalar if the input scale factor is a scalar, or an array if the input is an array.
+        Growth rate $dD/d\ln(a)$ at the requested scale factor(s). Returns a scalar if the input scale factor is a scalar, or an array if the input is an array.
 
     Notes:
         The growth rate is computed by solving the ordinary differential equation (ODE)
@@ -707,8 +697,7 @@ def _growth_factor_gamma(
             factor. Default is 128.
 
     Returns:
-        Union[float, np.ndarray]: Growth factor computed at the requested scale factor(s).
-        Returns a scalar if the input scale factor is a scalar, or an array if the input is an array.
+        Growth factor computed at the requested scale factor(s). Returns a scalar if the input scale factor is a scalar, or an array if the input is an array.
 
     Notes:
         The growth factor is computed by integrating the growth rate function provided by the
@@ -753,8 +742,7 @@ def _growth_rate_gamma(
             at which the growth rate is computed. Can be a scalar or an array.
 
     Returns:
-        Union[float, np.ndarray]: Growth rate approximation computed at the requested scale factor(s).
-        Returns a scalar if the input scale factor is a scalar, or an array if the input is an array.
+        Growth rate approximation computed at the requested scale factor(s). Returns a scalar if the input scale factor is a scalar, or an array if the input is an array.
 
     Notes:
         The LCDM approximation to the growth rate $f_{\gamma}(a)$ is given by:
@@ -784,7 +772,7 @@ def scale_of_chi(
         n_z (int): the number of redshifts
 
     Returns:
-        Tuple[np.ndarray, np.ndarray]: the scalefactors and the comoving radial distance
+        The scalefactors and the comoving radial distance
     """
     a_min = z2a(z_min)
     a_max = z2a(z_max)

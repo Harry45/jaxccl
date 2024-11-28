@@ -133,35 +133,120 @@ def density_kernel(
     ell_factor = 1.0
     return constant_factor * ell_factor * radial_kernel
 
+def kappa_kernel(
+    cosmo: Cosmology, z_source: float, n_samples: int = 100, ell: int = 2000
+) -> Tuple[np.ndarray, np.ndarray]:
+    """This convenience function returns the radial kernel for
+    CMB-lensing-like tracers.
+
+    Args:
+        cosmo (Cosmology): the cosmology object with all cosmological parameters.
+        z_source (float): the redshift of the source
+        n_samples (int, optional): the number of samples of comoving radial distance. Defaults to 100.
+        ell (int, optional): the ell mode. Defaults to 2000.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: the kernel and the comoving radial distance
+    """
+
+    # get the comoving radial distance of the source
+    chi_source = bkgrd.radial_comoving_distance(cosmo, z2a(z_source))
+
+    # get the scale factor and the comoving radial distance
+    a_arr, chi_arr = bkgrd.scale_of_chi(cosmo, 0.0, z_source, n_samples)
+
+    # calculate the radial kernel
+    radial_kernel = (1.0 / a_arr) * chi_arr * (chi_source - chi_arr) / chi_source
+
+    # Constant term (note that I have edited this prefactor so it agrees with CCL implementation, essentially multiplying by h^2 / c)
+    constant_factor = (3.0 * const.H0**2 * cosmo.h**2 * cosmo.Omega_m) / (
+        2.0 * const.c**2
+    )
+
+    # prefactor containing the ell terms
+    f_ell = ell * (ell + 1) / (ell + 0.5) ** 2
+
+    # the final kernel
+    w_arr = constant_factor * f_ell * radial_kernel
+
+    return w_arr, chi_arr
 
 @jit
-def nla_kernel(cosmo, pzs, bias, z, ell):
+def nla_kernel(
+    cosmo: Cosmology,
+    pzs: List,
+    bias: List,
+    z: np.ndarray,
+    ell: int
+) -> np.ndarray:
+    r"""Computes the Non-Linear Alignment (NLA) Intrinsic Alignment (IA) kernel.
+
+    The NLA kernel is used in cosmic shear and intrinsic alignment studies to model
+    the non-linear alignment of galaxy intrinsic alignments. This implementation
+    follows the formulation in [Joachimi et al. (2011)](https://arxiv.org/abs/1008.3491). See Equation 6.
+
+    Args:
+        cosmo (Cosmology): Cosmological parameters object.
+        pzs (List): List of photometric redshift distribution functions.
+        bias (List): Bias function or list of bias functions.
+        z (np.ndarray): Redshift values to evaluate the kernel.
+        ell (int): Multipole moment for angular power spectrum calculation.
+
+    Returns:
+        np.ndarray: Computed NLA kernel values.
+
+    Raises:
+        NotImplementedError: If delta redshift distributions are used.
     """
-    Computes the NLA IA kernel
-    """
+    # Check for delta redshift distributions
     if any(isinstance(pz, rds.delta_nz) for pz in pzs):
         raise NotImplementedError(
             "NLA kernel not properly implemented for delta redshift distributions"
         )
-    # stack the dndz of all redshift bins
+
+    # Stack the dndz of all redshift bins
     dndz = np.stack([pz(z) for pz in pzs], axis=0)
+
     # Compute radial NLA kernel: same as clustering
     if isinstance(bias, list):
-        # This is to handle the case where we get a bin-dependent bias
+        # Handle bin-dependent bias
         b = np.stack([b(cosmo, z) for b in bias], axis=0)
     else:
         b = bias(cosmo, z)
+
+    # Compute radial kernel components
     radial_kernel = dndz * b * bkgrd.H(cosmo, z2a(z))
-    # Apply common A_IA normalization to the kernel
-    # Joachimi et al. (2011), arXiv: 1008.3491, Eq. 6.
+
+    # Apply A_IA normalization to the kernel
     radial_kernel *= (
         -(5e-14 * const.rhocrit) * cosmo.Omega_m / bkgrd.growth_factor(cosmo, z2a(z))
     )
-    # Constant factor
+
+    # Constant and ell-dependent factors
     constant_factor = 1.0
-    # Ell dependent factor
     ell_factor = np.sqrt((ell - 1) * (ell) * (ell + 1) * (ell + 2)) / (ell + 0.5) ** 2
+
     return constant_factor * ell_factor * radial_kernel
+
+def power_kernel(
+    cosmo: Cosmology, amplitude: float, alpha: float, **kwargs
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Tracer obeying a power law alpha with an amplitude.
+
+    Args:
+        cosmo (Cosmology): the cosmology object in JAXCOSMO
+        amplitude (float): the amplitude of the kernel
+        alpha (float): the power of the kernel
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: the kernel and the comoving radial distance
+    """
+    z_min = kwargs["z_min"]
+    z_max = kwargs["z_max"]
+    n_z = kwargs["n_z"]
+    a_arr, chi_arr = bkgrd.scale_of_chi(cosmo, z_min, z_max, n_z)
+    w_arr = amplitude * a_arr**alpha
+    return w_arr, chi_arr
 
 
 @register_pytree_node_class
@@ -341,25 +426,6 @@ class NumberCounts(container):
         return 1.0 / ngals
 
 
-def power_kernel(
-    cosmo: Cosmology, amplitude: float, alpha: float, **kwargs
-) -> Tuple[np.ndarray, np.ndarray]:
-    """Tracer obeying a power law alpha with an amplitude.
-
-    Args:
-        cosmo (Cosmology): the cosmology object in JAXCOSMO
-        amplitude (float): the amplitude of the kernel
-        alpha (float): the power of the kernel
-
-    Returns:
-        Tuple[np.ndarray, np.ndarray]: the kernel and the comoving radial distance
-    """
-    z_min = kwargs["z_min"]
-    z_max = kwargs["z_max"]
-    n_z = kwargs["n_z"]
-    a_arr, chi_arr = bkgrd.scale_of_chi(cosmo, z_min, z_max, n_z)
-    w_arr = amplitude * a_arr**alpha
-    return w_arr, chi_arr
 
 
 @register_pytree_node_class
@@ -525,43 +591,7 @@ class tSZTracer(container):
         return power_kernel(cosmo, amplitude=amp, alpha=1.0, **inputs)
 
 
-def kappa_kernel(
-    cosmo: Cosmology, z_source: float, n_samples: int = 100, ell: int = 2000
-) -> Tuple[np.ndarray, np.ndarray]:
-    """This convenience function returns the radial kernel for
-    CMB-lensing-like tracers.
 
-    Args:
-        cosmo (Cosmology): the cosmology object with all cosmological parameters.
-        z_source (float): the redshift of the source
-        n_samples (int, optional): the number of samples of comoving radial distance. Defaults to 100.
-        ell (int, optional): the ell mode. Defaults to 2000.
-
-    Returns:
-        Tuple[np.ndarray, np.ndarray]: the kernel and the comoving radial distance
-    """
-
-    # get the comoving radial distance of the source
-    chi_source = bkgrd.radial_comoving_distance(cosmo, z2a(z_source))
-
-    # get the scale factor and the comoving radial distance
-    a_arr, chi_arr = bkgrd.scale_of_chi(cosmo, 0.0, z_source, n_samples)
-
-    # calculate the radial kernel
-    radial_kernel = (1.0 / a_arr) * chi_arr * (chi_source - chi_arr) / chi_source
-
-    # Constant term (note that I have edited this prefactor so it agrees with CCL implementation, essentially multiplying by h^2 / c)
-    constant_factor = (3.0 * const.H0**2 * cosmo.h**2 * cosmo.Omega_m) / (
-        2.0 * const.c**2
-    )
-
-    # prefactor containing the ell terms
-    f_ell = ell * (ell + 1) / (ell + 0.5) ** 2
-
-    # the final kernel
-    w_arr = constant_factor * f_ell * radial_kernel
-
-    return w_arr, chi_arr
 
 
 @register_pytree_node_class
