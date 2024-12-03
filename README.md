@@ -9,3 +9,10 @@ Within the `jaxccl/` folder:
 ```bash
 PYTHONPATH=$(pwd) pytest -s benchmarks/test_distances.py
 ```
+
+## Compiling the Documentation
+
+```bash
+mkdocs build
+mkdocs serve
+```
