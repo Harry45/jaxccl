@@ -1,12 +1,12 @@
 site_name: JAXCCL
-# site_url: https://harry45.github.io/CosmoCruncher/
+site_url: https://jaxccl.pages.dev/
 site_author: Dr. Arrykrishna Mootoovaloo
 site_description: >-
   Differentiable CCL using JAX.
 
 # Repository
-# repo_name: CosmoCruncher
-# repo_url: https://github.com/Harry45/CosmoCruncher
+repo_name: jaxccl
+repo_url: https://github.com/Harry45/jaxccl
 
 # Run at a specific address on local machine
 dev_addr: 127.0.0.1:8006
@@ -16,7 +16,7 @@ nav:
   - Home: index.md
   - About: about.md
   - Tutorials:
-      - Distance: playground.ipynb
+      - Distance: distance.ipynb
   - Code:
       - Background: background.md
       - Probes: probes.md

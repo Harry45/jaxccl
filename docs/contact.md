@@ -39,35 +39,47 @@ icon: material/card-account-mail
         }
     </style>
 </head>
+
 <body>
     <div class="contact-card">
-        <img src="toddler.jpg" alt="Person" width="100" height="100">
+        <img src="user.jpg" alt="Person" width="100" height="100">
         <div class="contact-details">
-            <p><strong>Name:</strong> John</p>
-            <p><strong>Institution:</strong> Example University</p>
-            <p><strong>Email:</strong> john.doe@example.com</p>
+            <p><strong>Name:</strong> JEC</p>
+            <p><strong>Institution:</strong> NA</p>
+            <p><strong>Email:</strong> NA</p>
         </div>
     </div>
 </body>
 
 <body>
     <div class="contact-card">
-        <img src="toddler.jpg" alt="Person" width="100" height="100">
+        <img src="user.jpg" alt="Person" width="100" height="100">
         <div class="contact-details">
-            <p><strong>Name:</strong> John</p>
-            <p><strong>Institution:</strong> Example University</p>
-            <p><strong>Email:</strong> john.doe@example.com</p>
+            <p><strong>Name:</strong> FL</p>
+            <p><strong>Institution:</strong> NA</p>
+            <p><strong>Email:</strong> NA</p>
         </div>
     </div>
 </body>
 
 <body>
     <div class="contact-card">
-        <img src="toddler.jpg" alt="Person" width="100" height="100">
+        <img src="DA.jpeg" alt="Person" width="100" height="100">
         <div class="contact-details">
-            <p><strong>Name:</strong> John</p>
-            <p><strong>Institution:</strong> Example University</p>
-            <p><strong>Email:</strong> john.doe@example.com</p>
+            <p><strong>Name:</strong> David Alonso</p>
+            <p><strong>Institution:</strong> University of Oxford</p>
+            <p><strong>Email:</strong> david.alonso@physics.ox.ac.uk</p>
+        </div>
+    </div>
+</body>
+
+<body>
+    <div class="contact-card">
+        <img src="AM.jpg" alt="Person" width="100" height="100">
+        <div class="contact-details">
+            <p><strong>Name:</strong> Arrykrishna Mootoovaloo</p>
+            <p><strong>Institution:</strong> University of Oxford</p>
+            <p><strong>Email:</strong> arrykrish@gmail.com</p>
         </div>
     </div>
 </body>
