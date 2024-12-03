@@ -80,6 +80,8 @@ class Cosmology:
         if Omega_r is None:
             f_rel = 1.0 + self._Neff * (7.0 / 8.0) * (4.0 / 11.0) ** (4.0 / 3.0)
             self._Omega_r = self._Omega_g * f_rel
+        else:
+            self._Omega_r = Omega_r
 
         self._flags = {}
 

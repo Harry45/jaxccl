@@ -17,6 +17,7 @@ nav:
   - About: about.md
   - Tutorials:
       - Distance: distance.ipynb
+      - Tracers: tracers.ipynb
   - Code:
       - Background: background.md
       - Probes: probes.md

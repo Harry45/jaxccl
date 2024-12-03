@@ -15,8 +15,14 @@ from jax_cosmo.utils import a2z
 from jax_cosmo.utils import z2a
 from jax_cosmo.core import Cosmology
 from jax_cosmo.redshift import redshift_distribution
+import jax_cosmo.cclconstants as cst
 
-__all__ = ["WeakLensing", "NumberCounts"]
+__all__ = ["WeakLensing",
+           "NumberCounts",
+           "CIBTracer",
+           "CMBLensingTracer",
+           "zPowerTracer",
+           "tSZTracer"]
 
 
 @jit
@@ -271,6 +277,107 @@ def power_kernel(
     w_arr = amplitude * a_arr**alpha
     return w_arr, chi_arr
 
+
+def isw_kernel(cosmo: Cosmology, z_max: float, n_z: int) -> Tuple[np.ndarray, np.ndarray]:
+    r"""
+    Compute the kernel for the Integrated Sachs-Wolfe (ISW) effect.
+
+    The ISW effect contributes to temperature fluctuations in the Cosmic Microwave Background (CMB)
+    anisotropies due to the time evolution of the gravitational potential in a matter-dominated
+    universe. The contribution to the CMB temperature is given by:
+
+    $$
+    \Delta T_{\textrm CMB} = 2T_{\textrm CMB} \int_0^{\chi_{LSS}}d\chi a\,\dot{\phi}
+    $$
+
+    This function calculates the kernel required to compute angular power spectra involving
+    the ISW effect. Note that any angular power spectra computed with this tracer should involve
+    a three-dimensional power spectrum using the matter power spectrum.
+
+    Args:
+        cosmo (Cosmology): A cosmology object containing relevant parameters for calculations.
+        z_max (float): The maximum redshift to compute the kernel up to.
+        n_z (int): The number of redshift points for the kernel computation.
+
+    Returns:
+        The ISW kernel values as an array.
+        The comoving radial distance corresponding to the redshift points.
+
+    Raises:
+        ValueError: If `z_max` or `n_z` are not valid positive numbers.
+    """
+    # Compute the scale factor and comoving distance arrays
+    a_arr, chi = bkgrd.scale_of_chi(cosmo, 0.0, z_max, n_z)
+
+    # Extract cosmological parameters
+    H0 = cosmo.h / cst.CLIGHT_HMPC  # Hubble constant in h/Mpc
+    OM = cosmo.Omega_m  # Matter density parameter
+
+    # Calculate background functions
+    Ez = bkgrd.H(cosmo, a_arr) / 100  # Hubble parameter normalized to 100 km/s/Mpc
+    fz = bkgrd.growth_rate(cosmo, a_arr)  # Growth rate of matter fluctuations
+
+    # Compute the ISW kernel
+    w_arr = 3 * cst.T_CMB * H0**3 * OM * Ez * chi**2 * (1 - fz)
+
+    return w_arr, chi
+
+class ISWTracer(container):
+    """
+    Class representing the tracer associated with the Integrated Sachs-Wolfe (ISW) effect.
+
+    The ISW effect describes the temperature fluctuations in the Cosmic Microwave Background (CMB)
+    due to the time evolution of gravitational potentials, which primarily occurs at late times in
+    a universe with dark energy or curvature.
+
+    Attributes:
+        z_max (float, optional): The maximum redshift up to which the kernel is computed. Defaults to 6.0.
+        n_z (int, optional): The number of redshift points for the computation. Defaults to 1024.
+    """
+
+    def __init__(self, z_max: float = 6.0, n_z: int = 1024):
+        super(ISWTracer, self).__init__(z_max, n_z)
+
+    @property
+    def zmax(self) -> float:
+        """
+        Returns the maximum redshift probed by this tracer.
+
+        Returns:
+            Maximum redshift.
+        """
+        return self.params[0]
+
+    @property
+    def n_z(self) -> int:
+        """
+        Returns the number of redshift points used in this tracer.
+
+        Returns:
+            Number of redshift points.
+        """
+        return self.params[1]
+
+    def kernel(self, cosmo: Cosmology) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Calculates the ISW kernel and comoving radial distances.
+
+        The kernel represents the contribution of the ISW effect across different
+        redshifts and distances.
+
+        Args:
+            cosmo (Cosmology): The cosmology object providing the cosmological parameters.
+
+        Returns:
+            The ISW kernel values as an array.
+            The comoving radial distances corresponding to the redshift points.
+        """
+        inputs = {
+            "z_max": self.params[0],
+            "n_z": self.params[1],
+        }
+        return isw_kernel(cosmo, **inputs)
+
 @register_pytree_node_class
 class WeakLensing(container):
     """
@@ -287,13 +394,6 @@ class WeakLensing(container):
             value or a list matching the number of redshift bins.
         sigma_e (float): The intrinsic ellipticity of galaxies. Defaults to 0.26.
         config (dict): Configuration settings, including flags such as `ia_enabled`.
-
-    Args:
-        redshift_bins (List): A list of redshift distributions for each redshift bin.
-        ia_bias (Optional[Union[float, List[float]]], optional): IA bias parameter. Defaults to None.
-        multiplicative_bias (Union[float, List[float]], optional): Multiplicative bias. Defaults to 0.0.
-        sigma_e (float, optional): Intrinsic galaxy ellipticity. Defaults to 0.26.
-        **kwargs: Additional configuration parameters passed to the parent class.
     """
 
     def __init__(
@@ -400,12 +500,6 @@ class NumberCounts(container):
         redshift_bins (List): A list of redshift distributions for each redshift bin.
         bias (List[float]): The bias parameter for each redshift bin.
         has_rsd (bool): Indicates whether the redshift space distortion (RSD) effect is included.
-
-    Args:
-        redshift_bins (List): A list of redshift distributions for each redshift bin.
-        bias (List[float]): The bias parameter for each redshift bin.
-        has_rsd (bool, optional): A flag indicating whether the RSD effect is included. Defaults to False.
-        **kwargs: Additional configuration parameters for the parent class.
     """
 
     def __init__(self, redshift_bins:List, bias: List, has_rsd: bool=False, **kwargs):
@@ -490,14 +584,6 @@ class CIBTracer(container):
 
     def __init__(self, z_min=0.0, z_max=6.0, n_z=1024):
         super(CIBTracer, self).__init__(z_min, z_max, n_z)
-        """
-        Initializes a CIBTracer instance.
-
-        Args:
-            z_min (float, optional): The minimum redshift. Defaults to 0.0.
-            z_max (float, optional): The maximum redshift. Defaults to 6.0.
-            n_z (int, optional): The number of redshifts. Defaults to 1024.
-        """
 
     @property
     def zmin(self) -> float:
@@ -565,11 +651,6 @@ class zPowerTracer(container):
         z_min (float): The minimum redshift to compute the kernel. Defaults to 0.0.
         z_max (float): The maximum redshift to compute the kernel. Defaults to 6.0.
         n_z (int): The number of redshift points in the kernel. Defaults to 1024.
-
-    Args:
-        z_min (float, optional): The minimum redshift to compute the kernel. Defaults to 0.0.
-        z_max (float, optional): The maximum redshift to compute the kernel. Defaults to 6.0.
-        n_z (int, optional): The number of redshift samples. Defaults to 1024.
     """
 
     def __init__(self, z_min: float = 0.0, z_max: float = 6.0, n_z: int = 1024):
@@ -644,10 +725,6 @@ class tSZTracer(container):
     Attributes:
         z_max (float): The maximum redshift to be considered. Defaults to 6.0.
         n_z (int): The number of redshift samples. Defaults to 1024.
-
-    Args:
-        z_max (float, optional): The maximum redshift to compute the kernel. Defaults to 6.0.
-        n_z (int, optional): The number of redshift points in the kernel. Defaults to 1024.
     """
     def __init__(self, z_max: float = 6.0, n_z: int = 1024):
         super(tSZTracer, self).__init__(z_max, n_z)
@@ -717,13 +794,7 @@ class CMBLensingTracer(container):
 
     def __init__(self, z_source: float, n_samples: int = 100):
         super(CMBLensingTracer, self).__init__(z_source, n_samples)
-        """
-        Initializes a CMBLensingTracer instance.
 
-        Args:
-            z_source (float): The redshift of the source plane (CMB).
-            n_samples (int, optional): The number of samples for the comoving radial distance grid. Defaults to 100.
-        """
     @property
     def z_source(self) -> float:
         """
