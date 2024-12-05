@@ -2,6 +2,7 @@
 title: Contact
 icon: material/card-account-mail
 ---
+
 # Contact
 
 <html lang="en">
@@ -64,7 +65,7 @@ icon: material/card-account-mail
 
 <body>
     <div class="contact-card">
-        <img src="DA.jpeg" alt="Person" width="100" height="100">
+        <img src="DA-Young.jpeg" alt="Person" width="100" height="100">
         <div class="contact-details">
             <p><strong>Name:</strong> David Alonso</p>
             <p><strong>Institution:</strong> University of Oxford</p>
