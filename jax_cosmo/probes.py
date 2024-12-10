@@ -17,20 +17,20 @@ from jax_cosmo.core import Cosmology
 from jax_cosmo.redshift import redshift_distribution
 import jax_cosmo.cclconstants as cst
 
-__all__ = ["WeakLensing",
-           "NumberCounts",
-           "CIBTracer",
-           "CMBLensingTracer",
-           "zPowerTracer",
-           "tSZTracer"]
+__all__ = [
+    "WeakLensing",
+    "NumberCounts",
+    "CIBTracer",
+    "CMBLensingTracer",
+    "zPowerTracer",
+    "tSZTracer",
+    "ISWTracer",
+]
 
 
 @jit
 def weak_lensing_kernel(
-    cosmo: Cosmology,
-    pzs: List[redshift_distribution],
-    z: ArrayLike,
-    ell: float
+    cosmo: Cosmology, pzs: List[redshift_distribution], z: ArrayLike, ell: float
 ) -> np.ndarray:
     """
     Computes the weak lensing kernel.
@@ -112,7 +112,7 @@ def density_kernel(
     pzs: List[redshift_distribution],
     bias: List[float],
     z: np.ndarray,
-    ell: np.ndarray
+    ell: np.ndarray,
 ) -> np.ndarray:
     r"""
     Computes the number counts density kernel for a given cosmology, redshift bins,
@@ -160,6 +160,7 @@ def density_kernel(
     ell_factor = 1.0
     return constant_factor * ell_factor * radial_kernel
 
+
 def kappa_kernel(
     cosmo: Cosmology, z_source: float, n_samples: int = 100, ell: int = 2000
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -196,13 +197,10 @@ def kappa_kernel(
 
     return w_arr, chi_arr
 
+
 @jit
 def nla_kernel(
-    cosmo: Cosmology,
-    pzs: List,
-    bias: List,
-    z: np.ndarray,
-    ell: int
+    cosmo: Cosmology, pzs: List, bias: List, z: np.ndarray, ell: int
 ) -> np.ndarray:
     r"""Computes the Non-Linear Alignment (NLA) Intrinsic Alignment (IA) kernel.
 
@@ -253,6 +251,7 @@ def nla_kernel(
 
     return constant_factor * ell_factor * radial_kernel
 
+
 def power_kernel(
     cosmo: Cosmology, amplitude: float, alpha: float, **kwargs
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -278,7 +277,9 @@ def power_kernel(
     return w_arr, chi_arr
 
 
-def isw_kernel(cosmo: Cosmology, z_max: float, n_z: int) -> Tuple[np.ndarray, np.ndarray]:
+def isw_kernel(
+    cosmo: Cosmology, z_max: float, n_z: int
+) -> Tuple[np.ndarray, np.ndarray]:
     r"""
     Compute the kernel for the Integrated Sachs-Wolfe (ISW) effect.
 
@@ -321,6 +322,7 @@ def isw_kernel(cosmo: Cosmology, z_max: float, n_z: int) -> Tuple[np.ndarray, np
     w_arr = 3 * cst.T_CMB * H0**3 * OM * Ez * chi**2 * (1 - fz)
 
     return w_arr, chi
+
 
 class ISWTracer(container):
     """
@@ -377,6 +379,7 @@ class ISWTracer(container):
             "n_z": self.params[1],
         }
         return isw_kernel(cosmo, **inputs)
+
 
 @register_pytree_node_class
 class WeakLensing(container):
@@ -443,7 +446,7 @@ class WeakLensing(container):
         self,
         cosmo: Cosmology,
         z: Union[float, np.ndarray],
-        ell: Union[float, np.ndarray]
+        ell: Union[float, np.ndarray],
     ) -> np.ndarray:
         """
         Computes the radial kernel for all redshift bins in this probe.
@@ -502,7 +505,9 @@ class NumberCounts(container):
         has_rsd (bool): Indicates whether the redshift space distortion (RSD) effect is included.
     """
 
-    def __init__(self, redshift_bins:List, bias: List, has_rsd: bool=False, **kwargs):
+    def __init__(
+        self, redshift_bins: List, bias: List, has_rsd: bool = False, **kwargs
+    ):
         super(NumberCounts, self).__init__(
             redshift_bins, bias, has_rsd=has_rsd, **kwargs
         )
@@ -531,7 +536,12 @@ class NumberCounts(container):
         pzs = self.params[0]
         return len(pzs)
 
-    def kernel(self, cosmo: Cosmology, z: Union[float, np.ndarray], ell: Union[float, np.ndarray]) -> np.ndarray:
+    def kernel(
+        self,
+        cosmo: Cosmology,
+        z: Union[float, np.ndarray],
+        ell: Union[float, np.ndarray],
+    ) -> np.ndarray:
         """
         Computes the radial kernel for all redshift bins in this probe.
 
@@ -561,8 +571,6 @@ class NumberCounts(container):
         pzs = self.params[0]
         ngals = np.array([pz.gals_per_steradian for pz in pzs])
         return 1.0 / ngals
-
-
 
 
 @register_pytree_node_class
@@ -726,6 +734,7 @@ class tSZTracer(container):
         z_max (float): The maximum redshift to be considered. Defaults to 6.0.
         n_z (int): The number of redshift samples. Defaults to 1024.
     """
+
     def __init__(self, z_max: float = 6.0, n_z: int = 1024):
         super(tSZTracer, self).__init__(z_max, n_z)
 
@@ -769,6 +778,7 @@ class tSZTracer(container):
         }
         amp = 4.01710079e-06  # Amplitude of the tSZ kernel
         return power_kernel(cosmo, amplitude=amp, alpha=1.0, **inputs)
+
 
 @register_pytree_node_class
 class CMBLensingTracer(container):
