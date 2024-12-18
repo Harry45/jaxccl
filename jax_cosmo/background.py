@@ -105,7 +105,7 @@ def Esqr(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarr
         where $E^2(a)$ is obtained through Friedmann's Equation (see [Percival (2005)](https://arxiv.org/pdf/astro-ph/0508156)):
 
         $$
-        E^2(a) = \Omega_m a^{-3} + \Omega_k a^{-2} + (\Omega_g + \Omega_r) a^{-4} + \Omega_{de} e^{f(a)}
+        E^2(a) = \Omega_m a^{-3} + \Omega_k a^{-2} +  \Omega_r a^{-4} + \Omega_{de} e^{f(a)}
         $$
 
         Here, $f(a)$ is the Dark Energy evolution parameter.
@@ -113,7 +113,7 @@ def Esqr(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarr
     return (
         cosmo.Omega_m * np.power(a, -3)
         + cosmo.Omega_k * np.power(a, -2)
-        + (cosmo.Omega_g + cosmo.Omega_r) * np.power(a, -4)
+        + cosmo.Omega_r * np.power(a, -4)
         + cosmo.Omega_de * np.exp(f_de(cosmo, a))
     )
 
