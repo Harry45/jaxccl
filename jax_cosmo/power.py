@@ -48,7 +48,6 @@ ZMAX = 3.0
 
 # paths where the GPs are stored
 PATH_QUANT = "quantities"
-# PATH_QUANT = "/mnt/zfsusers/phys2286/projects/DESEMU/notebooks/quantities"
 
 # the important quantities (linear matter spectrum and growth factor)
 QUANT_PKLIN = [load_pkl(PATH_QUANT, f"pklin_{i}") for i in range(NK)]

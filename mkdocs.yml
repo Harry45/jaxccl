@@ -16,13 +16,15 @@ nav:
   - Home: index.md
   - About: about.md
   - Tutorials:
-      - Distance: distance.ipynb
-      - Tracers: tracers.ipynb
-      - Growth of Perturbations: growth_rate.ipynb
+      - Distance: notebook_distance.ipynb
+      - Tracers: notebook_tracers.ipynb
+      - Growth of Perturbations: notebook_growth_rate.ipynb
+      - Transfer Function: notebook_transfer.ipynb
   - Code:
       - Background: background.md
       - Probes: probes.md
       - Growth of Perturbations: growthfactor.md
+      - Transfer Function: transfer.md
   # - Application: application.md
   # - Emulator:
   #     - Matter: pk.md

@@ -1,10 +1,47 @@
 # This module contains various transfer functions from the literatu
 import jax.numpy as np
 
+from jax_cosmo.core import Cosmology
 import jax_cosmo.background as bkgrd
 import jax_cosmo.constants as const
 
-__all__ = ["Eisenstein_Hu"]
+__all__ = ["Eisenstein_Hu", "BBKS"]
+
+def BBKS(cosmo: Cosmology, k: np.ndarray) -> np.ndarray:
+    """
+    Calculates the BBKS transfer function based on the cosmological parameters
+    and wavenumber.
+
+    Args:
+        cosmo: An object containing cosmological parameters.
+               Expected attributes:
+
+               - h: Hubble parameter (dimensionless).
+               - Omega_b: Baryon density parameter.
+               - Omega_m: Matter density parameter.
+        k (float or numpy.ndarray): Wavenumber in units of h Mpc⁻¹.
+
+    Returns:
+        float or numpy.ndarray: The BBKS transfer function for the given wavenumber.
+
+    Notes:
+        - The input wavenumber `k` is in units of h Mpc⁻¹, but the internal
+          calculations use `q` in units of Mpc⁻¹.
+        - The transfer function is computed using the formula from Sugiyama (1995).
+    """
+    # Convert k from h Mpc⁻¹ to Mpc⁻¹
+    k = k * cosmo.h
+
+    # Compute q term (Sugiyama 1995)
+    power_term = -cosmo.Omega_b * (1.0 + np.sqrt(2.0 * cosmo.h) / cosmo.Omega_m)
+    q_term = k / (cosmo.Omega_m * cosmo.h**2 * np.exp(power_term))
+
+    # Compute the BBKS transfer function
+    transfer = (np.log(1.0 + 2.34 * q_term) / (2.34 * q_term) *
+                (1.0 + 3.89 * q_term + (16.2 * q_term)**2 +
+                 (5.47 * q_term)**3 + (6.71 * q_term)**4)**(-0.25))
+
+    return transfer * cosmo.h**3
 
 
 def Eisenstein_Hu(cosmo, k, type="eisenhu_osc"):
