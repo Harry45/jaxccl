@@ -4,8 +4,10 @@ Author: Dr. Arrykrishna Mootoovaloo
 Collaborators: David, Carlos, Jaime
 Date: June 2023
 """
+from dataclasses import dataclass, field
+from typing import List, Dict
 import jax.numpy as jnp
-
+from jax_cosmo.utils import load_pkl
 
 def pairwise_distance_jax(arr1: jnp.ndarray, arr2: jnp.ndarray) -> jnp.ndarray:
     """
@@ -148,3 +150,33 @@ def prediction_gf_jax(xtest: jnp.ndarray, quantities: list) -> jnp.ndarray:
     # we concatenate one because the growth factor is 1 at redshift 0.
     ypred = jnp.concatenate([jnp.ones(1), ypred])
     return ypred
+
+
+@dataclass
+class EMUdata:
+    nz: int = 20
+    nk: int = 30
+    kmin: float = 1e-4
+    kmax: float = 50.0
+    zmin: float = 0.0
+    zmax: float = 3.0
+    path_quant: str = "jax_cosmo/quantities"
+
+    quant_gf: List = field(init=False)
+    quant_pk: List = field(init=False)
+    zgrid: jnp.ndarray = field(init=False)
+    kgrid: jnp.ndarray = field(init=False)
+
+    priors: Dict[str, Dict[str, float]] = field(default_factory=lambda: {
+        "sigma8": {"distribution": "uniform", "loc": 0.6, "scale": 0.4},
+        "Omega_cdm": {"distribution": "uniform", "loc": 0.07, "scale": 0.43},
+        "Omega_b": {"distribution": "uniform", "loc": 0.028, "scale": 0.027},
+        "h": {"distribution": "uniform", "loc": 0.64, "scale": 0.18},
+        "n_s": {"distribution": "uniform", "loc": 0.87, "scale": 0.2},
+    })
+
+    def __post_init__(self):
+        self.quant_gf = [load_pkl(self.path_quant, f"gf_{i}") for i in range(self.nz - 1)]
+        self.quant_pk = [load_pkl(self.path_quant, f"pklin_{i}") for i in range(self.nk)]
+        self.zgrid = jnp.linspace(self.zmin, self.zmax, self.nz)
+        self.kgrid = jnp.geomspace(self.kmin, self.kmax, self.nk)

@@ -7,59 +7,21 @@ import jax_cosmo.transfer as tklib
 from jax_cosmo.scipy.integrate import romb
 from jax_cosmo.scipy.integrate import simps
 from jax_cosmo.scipy.interpolate import interp
-from jax_cosmo.utils import load_pkl, a2z
-from jax_cosmo.emulator import prediction_pklin_jax, prediction_gf_jax
+from jax_cosmo.utils import a2z
+from jax_cosmo.emulator import EMUdata, prediction_pklin_jax, prediction_gf_jax
 from jax.experimental import checkify
 
 jax.config.update("jax_enable_x64", True)
 
-__all__ = ["primordial_matter_power", "linear_matter_power", "nonlinear_matter_power"]
-
-# -------------------------------------------------------------------------------
-# Setup used for building the emulator - these should be fixed
-# -------------------------------------------------------------------------------
-
-# priors for the cosmological parameters
-COSMO_PRIORS = {
-    "sigma8": {"distribution": "uniform", "loc": 0.6, "scale": 0.4},
-    "Omega_cdm": {"distribution": "uniform", "loc": 0.07, "scale": 0.43},
-    "Omega_b": {"distribution": "uniform", "loc": 0.028, "scale": 0.027},
-    "h": {"distribution": "uniform", "loc": 0.64, "scale": 0.18},
-    "n_s": {"distribution": "uniform", "loc": 0.87, "scale": 0.2},
-}
-
-# number of nodes for redshifts
-NZ = 20
-
-# number of nodes for the linear matter power spectrum
-NK = 30
-
-# minimum wavenumber
-KMIN = 1e-4
-
-# maximum wavenumber
-KMAX = 50
-
-# minimum redshift
-ZMIN = 0.0
-
-# maximum redshift
-ZMAX = 3.0
-
-# paths where the GPs are stored
-PATH_QUANT = "quantities"
-
-# the important quantities (linear matter spectrum and growth factor)
-QUANT_PKLIN = [load_pkl(PATH_QUANT, f"pklin_{i}") for i in range(NK)]
-QUANT_GF = [load_pkl(PATH_QUANT, f"gf_{i}") for i in range(NZ - 1)]
-
-# the grids used in the training of the emulator
-ZGRID = jnp.linspace(ZMIN, ZMAX, NZ)
-KGRID = jnp.geomspace(KMIN, KMAX, NK)
+__all__ = ["primordial_matter_power",
+           "linear_matter_power",
+           "linear_matter_power_emu",
+           "nonlinear_matter_power",
+           ]
 
 # option to use the emulator or not
+EMUDATA = EMUdata()
 USE_EMU = True
-# -------------------------------------------------------------------------------
 
 
 def linear_matter_power_emu(cosmo, k: jnp.ndarray, a=1.0) -> jnp.ndarray:
@@ -89,17 +51,17 @@ def linear_matter_power_emu(cosmo, k: jnp.ndarray, a=1.0) -> jnp.ndarray:
         [cosmo.sigma8, cosmo.Omega_c, cosmo.Omega_b, cosmo.h, cosmo.n_s]
     )
     # this is the linear matter power spectrum at redshift 0
-    pklin_jax_0 = prediction_pklin_jax(testpoint, QUANT_PKLIN)
+    pklin_jax_0 = prediction_pklin_jax(testpoint, EMUDATA.quant_pk)
 
     # this is the growth factor between 0 and 3 (20 values)
-    gf_jax = prediction_gf_jax(testpoint, QUANT_GF)
+    gf_jax = prediction_gf_jax(testpoint, EMUDATA.quant_gf)
 
     # interpolate the power spectrum for the new wavenumbers
-    pklin_jax_0 = jnp.interp(jnp.log(k), jnp.log(KGRID), jnp.log(pklin_jax_0))
+    pklin_jax_0 = jnp.interp(jnp.log(k), jnp.log(EMUDATA.kgrid), jnp.log(pklin_jax_0))
     pklin_jax_0 = jnp.exp(pklin_jax_0)
 
     # this is the linear matter power spectrum for the queried scale factor.
-    pklin_jax_z = pklin_jax_0 * jnp.interp(redshift, ZGRID, gf_jax)
+    pklin_jax_z = pklin_jax_0 * jnp.interp(redshift, EMUDATA.zgrid, gf_jax)
 
     return pklin_jax_z
 
