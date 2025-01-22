@@ -45,7 +45,7 @@ without the $h^{2}$ factor for $\Omega_{\text{cdm}}$ and $\Omega_{b}$. The emula
 | \(h\)                                      | Uniform           | 0.64                     | 0.18                     | 0.7                            |
 | \(n_s\)                                    | Uniform           | 0.87                     | 0.2                      | 1.0                            |
 
-Neutrino mass in fixed, that is, $\sum m_{\nu}=0.06\,\text{eV}$ and the settings for generating the training set using `classy` is as follows:
+Neutrino mass is fixed, that is, $\sum m_{\nu}=0.06\,\text{eV}$ and the settings for generating the training set using `classy` is as follows:
 
 - $z_{\text{min}}=0.0$
 - $z_{\text{max}}=3.0$
