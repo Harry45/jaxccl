@@ -51,15 +51,11 @@ class EMUCMBdata:
     quant_te: List = field(init=False)
     quant_ee: List = field(init=False)
 
-    priors: Dict[str, Dict[str, float]] = field(init=False)
-
     def __post_init__(self):
         # Load values from config
         self.path_quant = "jax_cosmo/quantitiesCMB"  # Could also be moved to config if needed
         self.ncomponents = 50
         self.ellmax = 2500 # Default to 2500 if not in config
-
-        self.priors = self.cfg.priors  # Get priors directly from config
 
         # Load precomputed power spectra
         self.quant_tt = [load_pkl(self.path_quant, f"cmb_cls_tt_{i}") for i in range(self.ncomponents)]
