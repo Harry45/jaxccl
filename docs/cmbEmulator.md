@@ -19,8 +19,8 @@ A minimal example of how we can use the CMB emulator is as follows:
 from jax_cosmo.emulator import EMUCMBdata, prediction_cmb_cls
 from cmbrun.cmbcls import get_config
 
-emudata = EMUCMBdata()
 cfg = get_config('planck')
+emudata = EMUCMBdata(cfg)
 cosmology = np.array([0.8120, 0.265, 0.04938, 0.6732, 0.96605])
 
 # using the emulator to predict the power spectra
