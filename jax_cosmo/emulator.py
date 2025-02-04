@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict
 import jax.numpy as jnp
 from jax_cosmo.utils import load_pkl
-
+from ml_collections.config_dict import ConfigDict
 
 @dataclass
 class EMUdata:
@@ -41,30 +41,35 @@ class EMUdata:
 
 @dataclass
 class EMUCMBdata:
-    path_quant: str = "jax_cosmo/quantitiesCMB"
-    ncomponents: int = 50
-    ellmax: int = 2500
+    cfg: ConfigDict  # Pass the config object
+
+    path_quant: str = field(init=False)
+    ncomponents: int = field(init=False)
+    ellmax: int = field(init=False)
 
     quant_tt: List = field(init=False)
     quant_te: List = field(init=False)
     quant_ee: List = field(init=False)
 
-    priors: Dict[str, Dict[str, float]] = field(default_factory=lambda: {
-        "sigma8": {"distribution": "uniform", "loc": 0.7, "scale": 0.2, "fiducial": 0.8},
-        "Omega_cdm": {"distribution": "uniform", "loc": 0.20, "scale": 0.15, "fiducial": 0.2},
-        "Omega_b": {"distribution": "uniform", "loc": 0.04, "scale": 0.02, "fiducial": 0.045},
-        "h": {"distribution": "uniform", "loc": 0.62, "scale": 0.12, "fiducial": 0.68},
-        "n_s": {"distribution": "uniform", "loc": 0.90, "scale": 0.2, "fiducial": 1.0},
-    })
+    priors: Dict[str, Dict[str, float]] = field(init=False)
 
     def __post_init__(self):
+        # Load values from config
+        self.path_quant = "jax_cosmo/quantitiesCMB"  # Could also be moved to config if needed
+        self.ncomponents = 50
+        self.ellmax = 2500 # Default to 2500 if not in config
+
+        self.priors = self.cfg.priors  # Get priors directly from config
+
+        # Load precomputed power spectra
         self.quant_tt = [load_pkl(self.path_quant, f"cmb_cls_tt_{i}") for i in range(self.ncomponents)]
         self.quant_te = [load_pkl(self.path_quant, f"cmb_cls_te_{i}") for i in range(self.ncomponents)]
         self.quant_ee = [load_pkl(self.path_quant, f"cmb_cls_ee_{i}") for i in range(self.ncomponents)]
 
-        self.pipeline_tt = load_pkl('pipeline', 'cmb_cls_tt')
-        self.pipeline_te = load_pkl('pipeline', 'cmb_cls_te')
-        self.pipeline_ee = load_pkl('pipeline', 'cmb_cls_ee')
+        self.pipeline_tt = load_pkl("pipeline", "cmb_cls_tt")
+        self.pipeline_te = load_pkl("pipeline", "cmb_cls_te")
+        self.pipeline_ee = load_pkl("pipeline", "cmb_cls_ee")
+
         self.ells = jnp.arange(2, self.ellmax + 1)
 
 
