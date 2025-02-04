@@ -1,6 +1,7 @@
 benchmarks/data
 reference/
 data/
+gps/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -9,6 +9,65 @@ from typing import List, Dict
 import jax.numpy as jnp
 from jax_cosmo.utils import load_pkl
 
+
+@dataclass
+class EMUdata:
+    nz: int = 20
+    nk: int = 30
+    kmin: float = 1e-4
+    kmax: float = 50.0
+    zmin: float = 0.0
+    zmax: float = 3.0
+    path_quant: str = "jax_cosmo/quantities"
+
+    quant_gf: List = field(init=False)
+    quant_pk: List = field(init=False)
+    zgrid: jnp.ndarray = field(init=False)
+    kgrid: jnp.ndarray = field(init=False)
+
+    priors: Dict[str, Dict[str, float]] = field(default_factory=lambda: {
+        "sigma8": {"distribution": "uniform", "loc": 0.6, "scale": 0.4},
+        "Omega_cdm": {"distribution": "uniform", "loc": 0.07, "scale": 0.43},
+        "Omega_b": {"distribution": "uniform", "loc": 0.028, "scale": 0.027},
+        "h": {"distribution": "uniform", "loc": 0.64, "scale": 0.18},
+        "n_s": {"distribution": "uniform", "loc": 0.87, "scale": 0.2},
+    })
+
+    def __post_init__(self):
+        self.quant_gf = [load_pkl(self.path_quant, f"gf_{i}") for i in range(self.nz - 1)]
+        self.quant_pk = [load_pkl(self.path_quant, f"pklin_{i}") for i in range(self.nk)]
+        self.zgrid = jnp.linspace(self.zmin, self.zmax, self.nz)
+        self.kgrid = jnp.geomspace(self.kmin, self.kmax, self.nk)
+
+@dataclass
+class EMUCMBdata:
+    path_quant: str = "jax_cosmo/quantitiesCMB"
+    ncomponents: int = 50
+    ellmax: int = 2500
+
+    quant_tt: List = field(init=False)
+    quant_te: List = field(init=False)
+    quant_ee: List = field(init=False)
+
+    priors: Dict[str, Dict[str, float]] = field(default_factory=lambda: {
+        "sigma8": {"distribution": "uniform", "loc": 0.7, "scale": 0.2, "fiducial": 0.8},
+        "Omega_cdm": {"distribution": "uniform", "loc": 0.20, "scale": 0.15, "fiducial": 0.2},
+        "Omega_b": {"distribution": "uniform", "loc": 0.04, "scale": 0.02, "fiducial": 0.045},
+        "h": {"distribution": "uniform", "loc": 0.62, "scale": 0.12, "fiducial": 0.68},
+        "n_s": {"distribution": "uniform", "loc": 0.90, "scale": 0.2, "fiducial": 1.0},
+    })
+
+    def __post_init__(self):
+        self.quant_tt = [load_pkl(self.path_quant, f"cmb_cls_tt_{i}") for i in range(self.ncomponents)]
+        self.quant_te = [load_pkl(self.path_quant, f"cmb_cls_te_{i}") for i in range(self.ncomponents)]
+        self.quant_ee = [load_pkl(self.path_quant, f"cmb_cls_ee_{i}") for i in range(self.ncomponents)]
+
+        self.pipeline_tt = load_pkl('pipeline', 'cmb_cls_tt')
+        self.pipeline_te = load_pkl('pipeline', 'cmb_cls_te')
+        self.pipeline_ee = load_pkl('pipeline', 'cmb_cls_ee')
+        self.ells = jnp.arange(2, self.ellmax + 1)
+
+
 def pairwise_distance_jax(arr1: jnp.ndarray, arr2: jnp.ndarray) -> jnp.ndarray:
     """
     Calculates the pairwise distance between two sets of matrices/vectors. If p is the
@@ -151,32 +210,29 @@ def prediction_gf_jax(xtest: jnp.ndarray, quantities: list) -> jnp.ndarray:
     ypred = jnp.concatenate([jnp.ones(1), ypred])
     return ypred
 
+def prediction_cmb_cls(cosmology: jnp.ndarray, emudata: EMUCMBdata, cls_type: str = 'tt'):
+    """Predicts the Cosmic Microwave Background (CMB) power spectrum using trained Gaussian Processes (GPs).
 
-@dataclass
-class EMUdata:
-    nz: int = 20
-    nk: int = 30
-    kmin: float = 1e-4
-    kmax: float = 50.0
-    zmin: float = 0.0
-    zmax: float = 3.0
-    path_quant: str = "jax_cosmo/quantities"
+    Args:
+        cosmology (np.ndarray): An array containing cosmological parameters.
+        emudata (EMUCMBdata): An EMUCMBdata object containing trained GPs and preprocessing pipelines.
+        cls_type (str): The type of CMB power spectrum to predict (e.g., 'tt', 'ee', 'te').
 
-    quant_gf: List = field(init=False)
-    quant_pk: List = field(init=False)
-    zgrid: jnp.ndarray = field(init=False)
-    kgrid: jnp.ndarray = field(init=False)
+    Returns:
+        np.ndarray: Predicted CMB power spectrum for the given cosmology.
+    """
+    if cls_type == 'tt':
+        quant = emudata.quant_tt
+        pipeline = emudata.pipeline_tt
+    elif cls_type == 'te':
+        quant = emudata.quant_te
+        pipeline = emudata.pipeline_te
+    elif cls_type == 'ee':
+        quant = emudata.quant_ee
+        pipeline = emudata.pipeline_ee
+    else:
+        raise ValueError("Invalid CMB power spectrum type. Choose from 'tt', 'ee', 'te'.")
 
-    priors: Dict[str, Dict[str, float]] = field(default_factory=lambda: {
-        "sigma8": {"distribution": "uniform", "loc": 0.6, "scale": 0.4},
-        "Omega_cdm": {"distribution": "uniform", "loc": 0.07, "scale": 0.43},
-        "Omega_b": {"distribution": "uniform", "loc": 0.028, "scale": 0.027},
-        "h": {"distribution": "uniform", "loc": 0.64, "scale": 0.18},
-        "n_s": {"distribution": "uniform", "loc": 0.87, "scale": 0.2},
-    })
-
-    def __post_init__(self):
-        self.quant_gf = [load_pkl(self.path_quant, f"gf_{i}") for i in range(self.nz - 1)]
-        self.quant_pk = [load_pkl(self.path_quant, f"pklin_{i}") for i in range(self.nk)]
-        self.zgrid = jnp.linspace(self.zmin, self.zmax, self.nz)
-        self.kgrid = jnp.geomspace(self.kmin, self.kmax, self.nk)
+    prediction = prediction_jax(cosmology, quant)
+    prediction = pipeline.inverse_transform(prediction)
+    return prediction
