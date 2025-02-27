@@ -15,7 +15,7 @@ from jax_cosmo.utils import a2z
 from jax_cosmo.utils import z2a
 from jax_cosmo.core import Cosmology
 from jax_cosmo.redshift import redshift_distribution
-import jax_cosmo.cclconstants as cst
+from jax_cosmo.cclconstants import PhysicalConstants
 
 __all__ = [
     "WeakLensing",
@@ -27,6 +27,7 @@ __all__ = [
     "ISWTracer",
 ]
 
+CCLCST = PhysicalConstants()
 
 @jit
 def weak_lensing_kernel(
@@ -311,7 +312,7 @@ def isw_kernel(
     a_arr, chi = bkgrd.scale_of_chi(cosmo, 0.0, z_max, n_z)
 
     # Extract cosmological parameters
-    H0 = cosmo.h / cst.CLIGHT_HMPC  # Hubble constant in h/Mpc
+    H0 = cosmo.h / CCLCST.LIGHT_SPEED_H0_MPC  # Hubble constant in h/Mpc
     OM = cosmo.Omega_m  # Matter density parameter
 
     # Calculate background functions
@@ -319,7 +320,7 @@ def isw_kernel(
     fz = bkgrd.growth_rate(cosmo, a_arr)  # Growth rate of matter fluctuations
 
     # Compute the ISW kernel
-    w_arr = 3 * cst.T_CMB * H0**3 * OM * Ez * chi**2 * (1 - fz)
+    w_arr = 3 * CCLCST.T_CMB * H0**3 * OM * Ez * chi**2 * (1 - fz)
 
     return w_arr, chi
 

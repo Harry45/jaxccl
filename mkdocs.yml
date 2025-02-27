@@ -21,12 +21,14 @@ nav:
       - Growth of Perturbations: notebook_growth_rate.ipynb
       - Transfer Function: notebook_transfer.ipynb
       - CMB Emulator: notebook_cmb_cls.ipynb
+      - Halo Mass Function: notebook_hmfunc.ipynb
   - Code:
       - Background: background.md
       - Probes: probes.md
       - Growth of Perturbations: growthfactor.md
       - Transfer Function: transfer.md
       - CMB Emulator: cmbEmulator.md
+      - Halo Mass Function: hmf.md
   # - Application: application.md
   # - Emulator:
   #     - Matter: pk.md
