@@ -1,4 +1,4 @@
 ---
 template: home.html
-title: Fast Parameter Inference with Emulation
+title: JAX-COSMO Extended
 ---
