@@ -21,7 +21,7 @@ jax_mf = JAXMassFuncAngulo12()
 
 ---
 
-A list of the following mass functions are supported:
+A list of the following mass functions are supported.
 
 ### Angulo et al. (2012)
 The expression as derived by [Angulo et al. (2012)](https://arxiv.org/pdf/1203.3216v1) is
