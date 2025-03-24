@@ -16,3 +16,5 @@ PYTHONPATH=$(pwd) pytest -s benchmarks/test_distances.py
 mkdocs build
 mkdocs serve
 ```
+
+## Other Functionalities Included
