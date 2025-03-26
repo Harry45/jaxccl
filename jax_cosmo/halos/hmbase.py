@@ -207,6 +207,31 @@ class MassDefinition:
         omega_matter = omega_x(cosmo, scale_factor, "matter")
         return overdensity_value * omega_target / omega_matter
 
+def parse_mass_def(mass_def: Union[int, str]) -> Union[int, str]:
+    """Parses a mass definition string and returns the appropriate value.
+
+    Args:
+        mass_def (Union[int, str]): The mass definition, which can be:
+            - A string ending in "c" with a numeric prefix (e.g., "500c", "200c"),
+            - The string "vir",
+            - An integer (will be returned as-is).
+
+    Returns:
+        Union[int, str]: The extracted integer if the input is of the form "<number>c",
+        the string "vir" if specified, or the input integer if provided.
+
+    Raises:
+        ValueError: If the input is an invalid mass definition.
+    """
+    if isinstance(mass_def, int):
+        return mass_def
+    if isinstance(mass_def, str) and mass_def[:-1].isdigit():
+        return int(mass_def[:-1])
+    elif mass_def == "vir":
+        return "vir"
+    else:
+        raise ValueError("Invalid mass definition")
+
 def generate_massfunc_name(delta: int, density_type: str) -> str:
     """Generates a standardized name for a mass function based on the overdensity and density type.
 

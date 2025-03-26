@@ -4,6 +4,7 @@ import jax.numpy as jnp
 import jax_cosmo.background as bkgrd
 import jax_cosmo.constants as const
 import jax_cosmo.transfer as tklib
+from jax_cosmo.core import Cosmology
 from jax_cosmo.scipy.integrate import romb
 from jax_cosmo.scipy.integrate import simps
 from jax_cosmo.scipy.interpolate import interp
@@ -22,7 +23,6 @@ __all__ = ["primordial_matter_power",
 # option to use the emulator or not
 EMUDATA = EMUdata()
 USE_EMU = True
-
 
 def linear_matter_power_emu(cosmo, k: jnp.ndarray, a=1.0) -> jnp.ndarray:
     """
@@ -336,3 +336,27 @@ def nonlinear_matter_power(
     This function is just a wrapper over several nonlinear power spectra.
     """
     return nonlinear_fn(cosmo, k, a, transfer_fn=transfer_fn)
+
+
+def dlogP_dlogk(cosmo, k: jnp.ndarray, a: float, transfer_fn=tklib.Eisenstein_Hu, **kwargs) -> jnp.ndarray:
+    """
+    Computes the logarithmic derivative of the linear matter power spectrum with respect to k.
+
+    Args:
+        cosmo: Cosmology object.
+        k (jnp.ndarray): Wavenumber(s) in h/Mpc.
+        a (float): Scale factor.
+        transfer_fn (callable): Transfer function.
+        **kwargs: Extra arguments to pass to the transfer function.
+
+    Returns:
+        jnp.ndarray: The derivative d ln P / d ln k.
+    """
+    def log_P(log_k: float) -> float:
+        """Helper function to compute log(P) at log_k."""
+        return jnp.log(linear_matter_power(cosmo, jnp.exp(log_k), a, transfer_fn, **kwargs))
+
+    # Vectorize gradient computation over k
+    dlogP_dlogk_fn = jax.vmap(jax.grad(log_P))
+
+    return dlogP_dlogk_fn(jnp.log(k))

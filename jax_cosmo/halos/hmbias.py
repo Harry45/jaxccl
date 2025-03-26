@@ -154,7 +154,7 @@ class HaloBiasTinker10:
     """
     Implements halo bias as described in Tinker et al. (2010).
     This parametrization accepts spherical overdensity (S.O.) masses with
-    :math:`200 < \Delta < 3200`, defined with respect to the matter density.
+    200 < Delta < 3200, defined with respect to the matter density.
     It can be automatically translated to S.O. masses defined with respect to
     the critical density.
 
