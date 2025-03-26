@@ -611,7 +611,7 @@ class JAXConIshiyama21:
         G_inv = jax.vmap(lambda v, n: optx.root_find(self.solve_single,
                                                      solver,
                                                      y0=jnp.ones_like(v),
-                                                     args=(v, n)).value)(val, n_eff)
+                                                     args=(v, n), throw=False).value)(val, n_eff)
         return G_inv
 
     def compute_concentration(
