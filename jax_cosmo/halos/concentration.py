@@ -502,18 +502,18 @@ class JAXConPrada12:
 class JAXConIshiyama21:
     """Concentration-mass relation by Ishiyama et al. (2021).
 
-    This parametrization is valid for S.O. masses. By default, it initializes for `500c`.
+    This parametrization is valid for S.O. masses. By default, it initializes for 500c.
 
     Attributes:
         mass_def (str): A mass definition object or a string.
         relaxed (bool): If True, uses concentration for relaxed halos.
         Vmax (bool): If True, uses concentration from the "Vmax" method.
-        kappa (float): Model parameter extracted from `_vals` lookup.
-        a0 (float): Model parameter extracted from `_vals` lookup.
-        a1 (float): Model parameter extracted from `_vals` lookup.
-        b0 (float): Model parameter extracted from `_vals` lookup.
-        b1 (float): Model parameter extracted from `_vals` lookup.
-        c_alpha (float): Model parameter extracted from `_vals` lookup.
+        kappa (float): Model parameter extracted from _vals lookup.
+        a0 (float): Model parameter extracted from _vals lookup.
+        a1 (float): Model parameter extracted from _vals lookup.
+        b0 (float): Model parameter extracted from _vals lookup.
+        b1 (float): Model parameter extracted from _vals lookup.
+        c_alpha (float): Model parameter extracted from _vals lookup.
     """
 
     name = "Ishiyama21"
