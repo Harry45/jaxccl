@@ -3,6 +3,256 @@ title: Halos
 icon: material/orbit
 ---
 
+## Concentration
+
+### Bhattacharya et al. (2013)
+
+The concentration parameter depends on the growth factor $g(z)$. The peak height of perturbations is given by:
+
+$$
+\nu = \frac{\delta_c}{\sigma_{M}}
+$$
+
+where:
+
+- $\nu$ is the peak height.
+- $\sigma_{M}$ is the variance of the density field at mass scale $M$.
+
+The concentration parameter is:
+
+$$
+c(M, z) = A \cdot g(z)^B \cdot \nu^C
+$$
+
+where:
+
+- $c(M, z)$ is the concentration parameter.
+- $A, B, C$ are empirical constants, depending on the mass definition:
+
+    - [x] Virial mass, $M_{\text{vir}}$: $A = 7.7, B = 0.9, C = -0.29$
+    - [x] 200 mean density, $M_{200m}$: $A = 9.0, B = 1.15, C = -0.29$
+    - [x] 200 critical density, $M_{200c}$: $A = 5.9, B = 0.54, C = -0.35$
+
+
+The final concentration is computed as:
+
+$$
+c(M, z) = A \cdot g(z)^B \cdot \left( \frac{\delta_c}{\sigma_{M}} \right)^C
+$$
+
+See [Bhattacharya et al. (2013)](https://arxiv.org/pdf/1112.5479) for further details.
+
+### Diemer et al. (2015)
+
+The Lagrangian radius $R$ of a halo is computed from its mass, $M$. The characteristic wavenumber associated with the halo is:
+
+$$
+k_R = \frac{2\pi}{R} \cdot \kappa
+$$
+
+where:
+
+- $k_R$ is the characteristic wavenumber.
+- $\kappa = 1.0$ is a dimensionless parameter (default).
+
+
+The slope of the logarithmic matter power spectrum is:
+
+$$
+  \frac{d\log P}{d\log k}
+$$
+
+where $P(k)$ is the linear matter power spectrum. The slope is evaluate at the computed $k_R$.
+
+
+The peak height of density fluctuations is:
+
+$$
+\nu = \frac{\delta_c}{\sigma_{M}}
+$$
+
+The baseline concentration is:
+
+$$
+\phi = \phi_0 + \frac{d\log P}{d\log k} \cdot \phi_1
+$$
+
+The transition peak height $\nu_0$ is:
+
+$$
+\nu_0 = \eta_0 + \frac{d\log P}{d\log k} \cdot \eta_1
+$$
+
+where:
+
+- $\phi_0 = 6.58$, $\phi_1 = 1.27$ are empirical parameters.
+- $\eta_0 = 7.28$, $\eta_1 = 1.56$ are empirical parameters.
+
+
+The concentration is given by:
+
+$$
+c(M, z) = 0.5 \cdot \phi \cdot \left( \left( \frac{\nu_0}{\nu} \right)^\alpha + \left( \frac{\nu}{\nu_0} \right)^\beta \right)
+$$
+
+where:
+
+- $\alpha = 1.08$, $\beta = 1.77$ are power-law exponents.
+- The function interpolates between low-$\nu$ and high-$\nu$ behavior.
+
+See [Diemer et al. (2015)](https://arxiv.org/pdf/1407.4730) for further details.
+
+### Duffy et al. (2008)
+
+The concentration-mass relation from [Duffy et al. (2008)](https://arxiv.org/pdf/0804.2486) is given by:
+
+$$
+c(M, z) = A \cdot \left(\frac{M}{M_{\text{pivot}}} \right)^B \cdot a^{-C}
+$$
+
+where:
+
+- $c(M, z)$ is the halo concentration.
+- $M_{\text{pivot}}$ is a reference mass set to $2 \times 10^{12} h^{-1} M_{\odot}$.
+- $a$ is the scale factor.
+- $A, B, C$ are empirical parameters that depend on the mass definition:
+    + [x] Virial mass ($M_{\text{vir}}$): $A = 7.85, B = -0.081, C = -0.71$
+    + [x] 200 mean density ($M_{200m}$): $A = 10.14, B = -0.081, C = -1.01$
+    + [x] 200 critical density ($M_{200c}$): $A = 5.71, B = -0.084, C = -0.47$
+
+### Klypin et al. (2011)
+
+The concentration-mass relation from [Klypin et al. (2011)](https://arxiv.org/pdf/1002.3660) is given by:
+
+$$
+c(M, z) = 9.6 \cdot \left(\frac{M}{M_{\text{pivot}}} \right)^{-0.075}
+$$
+
+where:
+
+- $c(M, z)$ is the halo concentration.
+- $M$ is the halo mass (in solar masses).
+- $M_{\text{pivot}}$ is a reference mass:
+
+$$
+M_{\text{pivot}} = \frac{10^{12} M_{\odot}}{h}
+$$
+
+- h is the dimensionless Hubble parameter.
+
+This equation describes how the concentration of dark matter halos varies with mass, but **it does not explicitly depend on redshift**.
+
+
+### Prada et al. (2012)
+
+The concentration-mass relation from [Prada et al. (2012)](https://arxiv.org/pdf/1104.5130) is given by:
+
+$$
+c(M, z) = b_0(x) \cdot c_{\text{eff}}(\sigma_M)
+$$
+
+where
+
+$$
+c_{\text{eff}}(\sigma_M) = 2.881\,\text{exp}\left(\frac{0.060}{\sigma_{P}^{2}}\right)\left[\left( \frac{\sigma_P}{1.257} \right)^{1.022} + 1 \right],
+$$
+
+
+and the modified variance is:
+
+$$
+\sigma_P = b_1(x) \cdot \sigma_M.
+$$
+
+where
+
+$$
+x = a \times \left( \frac{\Omega_{\text{de}}}{\Omega_m} \right)^{1/3}
+$$
+
+and
+
+- $a = \frac{1}{1+z}$ is the scale factor,
+- $\Omega_{\text{de}}$ and $\Omega_m$ are the dark energy and matter density parameters,
+- $\sigma_M$ is the mass variance,
+- $b_0(x)$ and $b_1(x)$ are computed using:
+
+$$
+b_0(x) = \frac{c_{\min}(x, x_0, c_0, c_1, \alpha)}{c_{\min}(1.393, x_0, c_0, c_1, \alpha)}
+$$
+
+$$
+b_1(x) = \frac{c_{\min}(x, x_1, i_0, i_1, \beta)}{c_{\min}(1.393, x_1, i_0, i_1, \beta)}
+$$
+
+The expression for $c_{\min}$ is:
+
+$$
+c_{\min}(x, x_0, v_0, v_1, v_2) = v_0 + (v_1 - v_0) \times \left( \frac{\text{tan}^{-1}(v_2 \cdot (x - x_0))}{\pi} + 0.5 \right).
+$$
+
+The model parameters are:
+
+- $c_0 = 3.681$, $c_1 = 5.033$, $\alpha = 6.948$, $x_0 = 0.424$
+- $i_0 = 1.047$, $i_1 = 1.646$, $\beta = 7.386$, $x_1 = 0.526$
+
+This formulation accounts for the **evolution of halo concentration** based on mass variance and redshift.
+
+### Ishiyama et al. (2021)
+
+The concentration-mass relation from [Ishiyama et al. (2021)](https://arxiv.org/pdf/2007.14720) is given by:
+
+$$
+c(M, z) = C_{\text{factor}} \cdot G^{-1}(\nu)
+$$
+
+where:
+
+$$
+G(x, n_{\text{eff}}) = \frac{x}{\left( \ln(1 + x) - \frac{x}{1 + x} \right)^{(5 + n_{\text{eff}}) / 6}}
+$$
+
+The peak height is given by:
+
+$$
+\nu = \frac{\delta_c}{\sigma_M}
+$$
+
+where:
+
+- $\delta_c$ is the critical overdensity for collapse and
+- $\sigma_M$ is the mass variance.
+
+The effective spectral index is:
+
+$$
+n_{\text{eff}} = -2 \frac{d \ln \sigma}{d \ln M} - 3.
+$$
+
+
+$\alpha_{\text{eff}}$ is the growth rate factor and the scaling factors are given by:
+
+$$
+A_{\text{factor}} = a_0 \left( 1 + a_1 (n_{\text{eff}} + 3) \right)
+$$
+
+$$
+B_{\text{factor}} = b_0 \left( 1 + b_1 (n_{\text{eff}} + 3) \right)
+$$
+
+$$
+C_{\text{factor}} = 1 - c_{\alpha} (1 - \alpha_{\text{eff}})
+$$
+
+$G^{-1}(\nu)$ is the inverse of $G(x)$, obtained by root finding, given $n_{\text{eff}}$ and $V$:
+
+$$
+V = \frac{A_{\text{factor}}}{\nu} \left( 1 + \frac{\nu^2}{B_{\text{factor}}} \right)
+$$
+
+where $a_0, a_1, b_0, b_1, c_{\alpha}$ are **model parameters** based on mass definition, relaxation state, and method. This formulation accounts for the **mass variance, spectral index, and structure growth** in determining the halo concentration.
+
+
 ## Halo Mass Function
 
 The halo mass function is defined as
