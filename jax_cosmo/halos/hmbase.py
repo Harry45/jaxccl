@@ -207,6 +207,51 @@ class MassDefinition:
         omega_matter = omega_x(cosmo, scale_factor, "matter")
         return overdensity_value * omega_target / omega_matter
 
+    def get_mass(self, cosmo: Cosmology,
+                 radius: Union[float, jnp.ndarray],
+                 scale_factor: float) -> Union[float, jnp.ndarray]:
+        """
+        Translates a halo radius into a mass.
+
+        Args:
+            cosmo (Cosmology): A Cosmology object.
+            radius (float or jnp.ndarray): Halo radius in Mpc (physical, not comoving).
+            scale_factor (float): Scale factor.
+
+        Returns:
+            float or jnp.ndarray: Halo mass in units of solar mass.
+        """
+        radius_use = jnp.atleast_1d(radius)
+        delta = self.get_overdensity(cosmo, scale_factor)
+        rho_x_calc = rho_x(cosmo, scale_factor, self.density_type)
+        mass = 4.18879020479 * rho_x_calc * delta * radius_use**3
+        if jnp.ndim(radius) == 0:
+            return float(mass[0])
+        return mass
+
+    def get_radius(self, cosmo: Cosmology,
+                   mass: Union[float, jnp.ndarray],
+                   scale_factor: float) -> Union[float, jnp.ndarray]:
+        """
+        Translates a halo mass into a radius.
+
+        Args:
+            cosmo (Cosmology): A Cosmology object.
+            mass (float or jnp.ndarray): Halo mass in units of solar mass.
+            scale_factor (float): Scale factor.
+
+        Returns:
+            float or jnp.ndarray: Halo radius in Mpc (physical, not comoving).
+        """
+        mass_use = jnp.atleast_1d(mass)
+        delta = self.get_overdensity(cosmo, scale_factor)
+        rho_x_calc = rho_x(cosmo, scale_factor, self.density_type)
+        radius = (mass_use / (4.18879020479 * delta * rho_x_calc))**(1./3.)
+        if jnp.ndim(mass) == 0:
+            return float(radius[0])
+        return radius
+
+
 def parse_mass_def(mass_def: Union[int, str]) -> Union[int, str]:
     """Parses a mass definition string and returns the appropriate value.
 
