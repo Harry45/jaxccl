@@ -7,6 +7,7 @@ from jax_cosmo.background import Esqr
 import jax_cosmo.power as jcp
 from quadax import simpson
 from interpax import Interpolator2D
+import optimistix as optx
 
 CCLCST = PhysicalConstants()
 CCL_SPLINE_PARAMS = CCLSplineParams()
@@ -145,8 +146,38 @@ def sigmaM_m2r(cosmo: Cosmology, halomass: Union[float, jnp.ndarray]) -> Union[f
 
     return smooth_radius
 
+def generate_massfunc_name(delta: int, density_type: str) -> str:
+    """Generates a standardized name for a mass function based on the overdensity and density type.
+
+    Args:
+        delta (int): The overdensity value.
+        density_type (str): The type of density (e.g., "matter").
+
+    Returns:
+        str: The standardized mass function name.
+    """
+    return f"{delta}{density_type[0]}"
+
 class MassDefinition:
     def __init__(self, overdensity: Union[float, str] = 200, density_type: str = "matter"):
+
+        # these need to be improved for JAX compatibility (to be able to use with jit/grad/vmap)
+
+        if isinstance(overdensity, str):
+            if overdensity.isdigit():
+                overdensity = int(overdensity)
+            elif overdensity not in ["fof", "vir"]:
+                raise ValueError(f"Unknown Delta type {overdensity}.")
+        if isinstance(overdensity, (int, float)) and overdensity < 0:
+            raise ValueError("Delta must be a positive number.")
+        if density_type not in ['matter', 'critical']:
+            raise ValueError("rho_type must be {'matter', 'critical'}.")
+
+        if isinstance(overdensity, (int, float)):
+            self.mass_def = generate_massfunc_name(overdensity, density_type)
+        else:
+            self.mass_def = f"{overdensity}"
+
         self.overdensity = overdensity
         self.density_type = density_type
 
@@ -252,6 +283,91 @@ class MassDefinition:
         return radius
 
 
+def mt_func(x: jnp.ndarray) -> jnp.ndarray:
+    """Computes the f(x) function used in concentration calculations.
+
+    Args:
+        x (jnp.ndarray): Input variable.
+
+    Returns:
+        jnp.ndarray: Computed f(x) values.
+    """
+    f_quant = x**3 / jnp.log(1+x) - x/(1+x)
+    return f_quant
+
+def mt_solve_single(params: jnp.ndarray, val: jnp.ndarray) -> jnp.ndarray:
+    """Computes the residual function for root-finding.
+
+    Args:
+        params (jnp.ndarray): Parameter to optimize.
+        val (jnp.ndarray): the old function.
+
+    Returns:
+        jnp.ndarray: Difference between f and target value.
+    """
+    return mt_func(params) - val
+
+def mt_optimisation(vals: jnp.ndarray) -> jnp.ndarray:
+    """Solves the root-finding problem for concentration using Newton's method.
+
+    Args:
+        vals (jnp.ndarray): Target values.
+
+    Returns:
+        jnp.ndarray: Optimized values (c_new).
+    """
+    solver = optx.Newton(rtol=1e-8, atol=1e-8)
+    cnew= optx.root_find(mt_solve_single, solver, y0=jnp.ones_like(vals), args=vals, throw=False).value
+    return cnew
+
+def mass_translator(mass_in: MassDefinition,
+                    mass_out: MassDefinition,
+                    cosmo: Cosmology,
+                    scale_factor: float,
+                    mass,
+                    concentration,
+                    interpolator):
+    """Translate between mass definitions, assuming an NFW profile.
+
+    Returns a function that can be used to translate between halo
+    masses according to two different definitions.
+
+    Args:
+        mass_in (MassDefinition): mass definition of the input mass.
+        mass_out (MassDefinition): mass definition of the output mass.
+        concentration: concentration-mass relation to use for the mass conversion. It must
+            be calibrated for masses using the mass_in definition.
+
+    Returns:
+        Function that translates between two masses. The returned function
+        ``f`` can be called as: ``f(cosmo, M, a)``, where
+        ``cosmo`` is a Cosmology object, ``M`` is a mass (or array of masses), and ``a`` is a scale factor.
+
+    """
+
+    if concentration.mass_def != mass_in.mass_def:
+        raise ValueError("mass_def of concentration doesn't match mass_in")
+
+    # def translate(cosmo, mass, scale_factor, interpolator):
+        if mass_in == mass_out:
+            return mass
+
+    c_in = concentration.compute_concentration(cosmo, mass, scale_factor, interpolator)
+    Om_in = omega_x(cosmo, scale_factor, mass_in.density_type)
+    D_in = mass_in.get_overdensity(cosmo, scale_factor) * Om_in
+    R_in = mass_in.get_radius(cosmo, mass, scale_factor)
+
+    Om_out = omega_x(cosmo, scale_factor, mass_out.density_type)
+    D_out = mass_out.get_overdensity(cosmo, scale_factor) * Om_out
+    f_old = mt_func(c_in) * D_in / D_out
+    c_out = mt_optimisation(f_old)
+    # c_out = convert_concentration(cosmo, c_old=c_in, Delta_old=D_in, Delta_new=D_out)
+    R_out = R_in * c_out/c_in
+    return mass_out.get_mass(cosmo, R_out, scale_factor)
+
+    # return translate
+
+
 def parse_mass_def(mass_def: Union[int, str]) -> Union[int, str]:
     """Parses a mass definition string and returns the appropriate value.
 
@@ -276,18 +392,6 @@ def parse_mass_def(mass_def: Union[int, str]) -> Union[int, str]:
         return "vir"
     else:
         raise ValueError("Invalid mass definition")
-
-def generate_massfunc_name(delta: int, density_type: str) -> str:
-    """Generates a standardized name for a mass function based on the overdensity and density type.
-
-    Args:
-        delta (int): The overdensity value.
-        density_type (str): The type of density (e.g., "matter").
-
-    Returns:
-        str: The standardized mass function name.
-    """
-    return f"{delta}{density_type[0]}"
 
 def w_tophat(k_times_r: Union[float, jnp.ndarray]) -> Union[float, jnp.ndarray]:
     """Computes the top-hat window function in Fourier space.

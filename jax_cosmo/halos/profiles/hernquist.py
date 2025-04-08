@@ -2,7 +2,7 @@ from typing import Union, Tuple
 import jax
 import jax.numpy as jnp
 from jax_cosmo.core import Cosmology
-from jax_cosmo.scipy.special import compute_sici #sici_single
+from jax_cosmo.scipy.special import compute_sici
 from interpax import Interpolator2D
 
 def norm_hq(mass: float, radius: float, conc: float) -> float:

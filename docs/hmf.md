@@ -2,6 +2,135 @@
 title: Halos
 icon: material/orbit
 ---
+## Profile
+
+**Fourier-space profile**: the Fourier transform ρ(*k*) of a spherically symmetric profile is given by:
+
+$$
+\rho(k) \equiv 4\pi \int_0^{\infty} dr\, r^2\, j_0(kr)\, \rho(r),
+$$
+
+where $j_{0}(kr)$ is the order-0 spherical Bessel function.
+
+**Projected 2D profile**: this is the profile integrated along the line-of-sight direction:
+
+$$
+\Sigma(r) \equiv \int_{-\infty}^{\infty} dr_{\parallel} \, \rho\left(\sqrt{r_{\parallel}^2 + r^2}\right).
+$$
+
+Note that this can be rewritten in terms of the Fourier-space profile:
+
+$$
+\Sigma(r) = \frac{1}{2\pi} \int_0^{\infty} dk\, k\, J_0(kr)\, \rho(k),
+$$
+
+where $J_{n}$ is the order-$n$ cylindrical (or standard) Bessel function.
+
+**Cumulative surface density**: this is the average projected profile within a circle of radius $r$ around the center of the halo:
+
+$$
+\Sigma(<r) \equiv \frac{2}{r^2} \int_0^{r} dr' \, r' \, \Sigma(r').
+$$
+
+This can also be rewritten in terms of the Fourier profile as:
+
+$$
+\Sigma(<r) = \frac{1}{2\pi} \int_0^{\infty} dk\, k\, \frac{2J_1(kr)}{kr} \, \rho(k).
+$$
+
+
+### NFW Profle
+
+
+The NFW profile has the form:
+
+$$
+\rho_{\text{NFW}}(r) = \frac{\rho_s}{(r / r_s)(1 + r / r_s)^2},
+$$
+
+where $\rho_s$ and $r_s$ are the inner density and the scale radius. The latter is related to the spherical overdensity radius $r_\Delta$ through the concentration parameter: $r_\Delta = c \, r_s$. See [Navarro et al. (1997)](https://arxiv.org/pdf/astro-ph/9611107) for further details.
+
+The mass of the NFW profile is not well-defined, since its integral diverges at large $r$. For this reason, it is common to consider the truncated profile, which is assumed to be zero for $r > r_\Delta$. In that case, the normalization $\rho_s$ is given by:
+
+$$
+\rho_s(M) = \frac{M}{4\pi r_s^3 \left[\log(1 + c) - \frac{c}{1 + c}\right]}.
+$$
+
+By default, this profile is truncated at $r = r_\Delta(M)$. Analytical solutions exist for $\rho(k)$, $\Sigma(r)$, and $\Sigma(<r)$ in the case of the NFW profile.
+
+The Fourier-space version of the NFW profile is also provided. This uses sine and cosine integrals to analytically transform the profile into Fourier space:
+
+$$
+si(x) = \int_{0}^{x}\dfrac{\textrm{sin}\,t}{t}\,\textrm{d}t
+$$
+
+$$
+ci(x) = \gamma + \textrm{log}(x) + \int_{0}^{x}\dfrac{\textrm{cos}\,t-1}{t}\,\textrm{d}t
+$$
+
+where $\gamma\approx 0.57721566490$ is the Euler–Mascheroni constant. For large values of $x$ ($x > 10$), we adopt the following approximation to make sure that the integrals are stable:
+
+$$
+C(x) = \dfrac{\textrm{cos}\,x}{x}\left(1-\dfrac{2!}{x^{2}}+\dfrac{4!}{x^{4}}-\dfrac{6!}{x^{6}}\ldots\right)
+$$
+
+$$
+S(x) = \dfrac{\textrm{sin}\,x}{x}\left(\dfrac{1}{x}-\dfrac{3!}{x^{3}}+\dfrac{5!}{x^{5}}-\dfrac{7!}{x^{7}}\ldots\right)
+$$
+
+$$
+si(x) = \dfrac{\pi}{2}-C(x)-S(x)
+$$
+
+$$
+ci(x) = S(x)-C(x)
+$$
+
+### Hernquist Profile
+
+The Hernquist profile has a similar form to the NFW profile but is steeper at larger radii:
+
+$$
+\rho(r) = \frac{\rho_0}{\frac{r}{r_s}\left(1 + \frac{r}{r_s}\right)^3}
+$$
+
+where $r_s$ is related to the comoving spherical overdensity halo radius $r_\Delta(M)$ through the concentration parameter $c(M)$ as
+
+$$
+r_\Delta(M) = c(M)\, r_s
+$$
+
+and the normalization $\rho_0$ is
+
+$$
+\rho_0 = \frac{M}{2\pi\, r_s^3} \left( \frac{1 + c}{c} \right)^2
+$$
+
+By default, this profile is truncated at $r = r_\Delta(M)$. See [Hernquist (1990)](https://articles.adsabs.harvard.edu/pdf/1990ApJ...356..359H) for further details.
+
+### Einasto
+
+[Einasto (1965)](https://ui.adsabs.harvard.edu/abs/1965TrAlm...5...87E/abstract) profile.
+
+$$
+\rho(r) = \rho_0 \, \exp\left(-2 \left( \left(\frac{r}{r_s}\right)^\alpha - 1 \right) / \alpha \right)
+$$
+
+where $r_s$ is related to the comoving spherical overdensity halo radius $r_\Delta(M)$ through the concentration parameter $c(M)$ as
+
+$$
+r_\Delta(M) = c(M) \, r_s
+$$
+
+and the normalization $\rho_0$ is
+
+$$
+\rho_0 = \frac{M}{4\pi \, r_s^3} \frac{2^{(3/\alpha)} \, \alpha^{(1 - 3/\alpha)} \, \exp(-2/\alpha)}{\gamma\left(\frac{3}{\alpha}, \frac{2}{\alpha} c^\alpha\right)},
+$$
+
+where $\gamma$ is the lower incomplete gamma function.
+
+The index $\alpha$ can be a free parameter or dependent on halo mass and redshift. In the latter case, we use the parameterization of [Diemer & Kravtsov (2014)](https://arxiv.org/abs/1401.1216).
 
 ## Concentration
 
