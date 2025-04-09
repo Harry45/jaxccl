@@ -28,7 +28,7 @@ Omega_b = 0.05
 h = 0.7
 A_s = 2.1e-9
 n_s = 0.96
-Neff = 0.
+Neff = 0.0
 
 # jax_cosmo uses sigma8 as input
 sigma8 = 0.8
@@ -43,10 +43,7 @@ Omega_v_vals = np.array([0.7, 0.7, 0.7, 0.65, 0.75])
 w0_vals = np.array([-1.0, -0.9, -0.9, -0.9, -0.9])
 wa_vals = np.array([0.0, 0.0, 0.1, 0.1, 0.1])
 
-mnu = [[0.04, 0., 0.],
-       [0.05, 0.01, 0.],
-       [0.05, 0., 0.],
-       [0.03, 0.02, 0.]]
+mnu = [[0.04, 0.0, 0.0], [0.05, 0.01, 0.0], [0.05, 0.0, 0.0], [0.03, 0.02, 0.0]]
 
 # For tests with massive neutrinos, we require N_nu_rel + N_nu_mass = 3
 # Because we compare with astropy for benchmarks
@@ -61,12 +58,13 @@ def read_chi_benchmark_file():
     """
     # Load data from file
     dat = np.genfromtxt("./benchmarks/data/chi_model1-5.txt").T
-    assert (dat.shape == (6, 6))
+    assert dat.shape == (6, 6)
 
     # Split into redshift column and chi(z) columns
     z = dat[0]
     chi = dat[1:]
     return z, chi
+
 
 def read_dm_benchmark_file():
     """
@@ -74,7 +72,7 @@ def read_dm_benchmark_file():
     """
     # Load data from file
     dat = np.genfromtxt("./benchmarks/data/dm_model1-5.txt").T
-    assert (dat.shape == (6, 6))
+    assert dat.shape == (6, 6)
 
     # Split into redshift column and chi(z) columns
     z = dat[0]
@@ -86,6 +84,7 @@ def read_dm_benchmark_file():
 z, chi = read_chi_benchmark_file()
 _, dm = read_dm_benchmark_file()
 
+
 def compare_distances(z, chi_bench, dm_bench, Omega_v, w0, wa):
     """
     Compare distances calculated by pyccl with the distances in the benchmark
@@ -96,17 +95,33 @@ def compare_distances(z, chi_bench, dm_bench, Omega_v, w0, wa):
     Omega_k = 1.0 - Omega_c - Omega_b - Omega_v
 
     cosmo = ccl.Cosmology(
-        Omega_c=Omega_c, Omega_b=Omega_b, Neff=Neff,
-        h=h, A_s=A_s, n_s=n_s, Omega_k=Omega_k,
-        w0=w0, wa=wa, Omega_g=0)
+        Omega_c=Omega_c,
+        Omega_b=Omega_b,
+        Neff=Neff,
+        h=h,
+        A_s=A_s,
+        n_s=n_s,
+        Omega_k=Omega_k,
+        w0=w0,
+        wa=wa,
+        Omega_g=0,
+    )
 
-    cosmo_jax = Cosmology(Omega_c=Omega_c, Omega_b=Omega_b, Neff=Neff,
-        h=h, sigma8=sigma8, n_s=n_s, Omega_k=Omega_k,
-        w0=w0, wa=wa, Omega_g=0)
-
+    cosmo_jax = Cosmology(
+        Omega_c=Omega_c,
+        Omega_b=Omega_b,
+        Neff=Neff,
+        h=h,
+        sigma8=sigma8,
+        n_s=n_s,
+        Omega_k=Omega_k,
+        w0=w0,
+        wa=wa,
+        Omega_g=0,
+    )
 
     # Calculate distance using pyccl
-    a = 1. / (1. + z)
+    a = 1.0 / (1.0 + z)
     chi = ccl.comoving_radial_distance(cosmo, a) * h
     chi_jccl = bg.radial_comoving_distance(cosmo_jax, a)
 
@@ -119,9 +134,14 @@ def compare_distances(z, chi_bench, dm_bench, Omega_v, w0, wa):
     dm = ccl.distance_modulus(cosmo, a[a_not_one])
     dm_jccl = bg.distance_modulus(cosmo_jax, a[a_not_one])
 
-    assert np.allclose(dm, dm_bench[a_not_one], atol=1e-3, rtol=DISTANCES_TOLERANCE*10)
-    assert np.allclose(dm_jccl, dm_bench[a_not_one], atol=1e-3, rtol=DISTANCES_TOLERANCE*10)
+    assert np.allclose(
+        dm, dm_bench[a_not_one], atol=1e-3, rtol=DISTANCES_TOLERANCE * 10
+    )
+    assert np.allclose(
+        dm_jccl, dm_bench[a_not_one], atol=1e-3, rtol=DISTANCES_TOLERANCE * 10
+    )
 
-@pytest.mark.parametrize('i', list(range(5)))
+
+@pytest.mark.parametrize("i", list(range(5)))
 def test_distance_model(i):
     compare_distances(z, chi[i], dm[i], Omega_v_vals[i], w0_vals[i], wa_vals[i])

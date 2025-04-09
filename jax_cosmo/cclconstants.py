@@ -3,18 +3,21 @@ from dataclasses import dataclass
 from typing import Optional
 
 # Precision parameters
-GSL_EPSREL = 1E-4  # Default relative precision
+GSL_EPSREL = 1e-4  # Default relative precision
 GSL_N_ITERATION = 1000  # Default number of iterations for integration and root-finding
-GSL_INTEGRATION_GAUSS_KRONROD_POINTS = 41  # Default number of Gauss-Kronrod points in QAG integration
-GSL_EPSREL_SIGMAR = 1E-5  # Relative precision in sigma_R calculations
-GSL_EPSREL_KNL = 1E-5  # Relative precision in k_NL calculations
-GSL_EPSREL_DIST = 1E-6  # Relative precision in distance calculations
-GSL_EPSREL_GROWTH = 1E-6  # Relative precision in growth calculations
-GSL_EPSREL_DNDZ = 1E-6  # Relative precision in dNdz calculations
+GSL_INTEGRATION_GAUSS_KRONROD_POINTS = (
+    41  # Default number of Gauss-Kronrod points in QAG integration
+)
+GSL_EPSREL_SIGMAR = 1e-5  # Relative precision in sigma_R calculations
+GSL_EPSREL_KNL = 1e-5  # Relative precision in k_NL calculations
+GSL_EPSREL_DIST = 1e-6  # Relative precision in distance calculations
+GSL_EPSREL_GROWTH = 1e-6  # Relative precision in growth calculations
+GSL_EPSREL_DNDZ = 1e-6  # Relative precision in dNdz calculations
 
 # Define species labels
 SPECIES_CRIT = "critical"
 SPECIES_M = "matter"
+
 
 @dataclass
 class PhysicalConstants:
@@ -25,8 +28,11 @@ class PhysicalConstants:
     GRAVITATIONAL_CONSTANT: float = 6.67430e-11  # m^3/kg/s^2
     SOLAR_MASS_KG: float = 1.988409871e30  # kg
     MPC_TO_METERS: float = 3.085677581491367399198952281e22  # Mpc to meters
-    RHO_CRITICAL: float = (3 * 100**2) / (8 * jnp.pi * GRAVITATIONAL_CONSTANT) * \
-                   ((1000 * 1000 * MPC_TO_METERS) / SOLAR_MASS_KG)
+    RHO_CRITICAL: float = (
+        (3 * 100**2)
+        / (8 * jnp.pi * GRAVITATIONAL_CONSTANT)
+        * ((1000 * 1000 * MPC_TO_METERS) / SOLAR_MASS_KG)
+    )
     BOLTZMANN_CONSTANT: float = 1.380649e-23  # J/K
     STEFAN_BOLTZMANN_CONSTANT: float = 5.670374419e-8  # kg/s^3/K^4
     PLANCK_CONSTANT: float = 6.62607015e-34  # kg m^2 / s
@@ -37,6 +43,7 @@ class PhysicalConstants:
     NEUTRINO_SPLITTING_3: float = -2.43e-3
     T_CMB: float = 2.7255  # K
     T_NCDM: float = 0.71611  # K
+
 
 @dataclass
 class CCLSplineParams:
@@ -65,8 +72,8 @@ class CCLSplineParams:
 
     # k-splines and integrals
     K_MAX_SPLINE: int = 50
-    K_MAX: float = 1E3
-    K_MIN: float = 5E-5
+    K_MAX: float = 1e3
+    K_MIN: float = 5e-5
     DLOGK_INTEGRATION: float = 0.025
     DCHI_INTEGRATION: float = 5.0
     N_K: int = 167
@@ -86,6 +93,7 @@ class CCLSplineParams:
     spline6: Optional[None] = None
     spline7: Optional[None] = None
 
+
 @dataclass
 class CCLGSLParams:
     N_ITERATION: int = GSL_N_ITERATION
@@ -99,6 +107,6 @@ class CCLGSLParams:
     ROOT_EPSREL: float = GSL_EPSREL
     ROOT_N_ITERATION: int = GSL_N_ITERATION
     ODE_GROWTH_EPSREL: float = GSL_EPSREL_GROWTH
-    EPS_SCALEFAC_GROWTH: float = 1E-6
+    EPS_SCALEFAC_GROWTH: float = 1e-6
     NZ_NORM_SPLINE_INTEGRATION: bool = True
     LENSING_KERNEL_SPLINE_INTEGRATION: bool = True

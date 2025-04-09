@@ -4,11 +4,13 @@ Author: Dr. Arrykrishna Mootoovaloo
 Collaborators: David, Carlos, Jaime
 Date: June 2023
 """
+
 from dataclasses import dataclass, field
 from typing import List, Dict
 import jax.numpy as jnp
 from jax_cosmo.utils import load_pkl
 from ml_collections.config_dict import ConfigDict
+
 
 @dataclass
 class EMUdata:
@@ -25,19 +27,26 @@ class EMUdata:
     zgrid: jnp.ndarray = field(init=False)
     kgrid: jnp.ndarray = field(init=False)
 
-    priors: Dict[str, Dict[str, float]] = field(default_factory=lambda: {
-        "sigma8": {"distribution": "uniform", "loc": 0.6, "scale": 0.4},
-        "Omega_cdm": {"distribution": "uniform", "loc": 0.07, "scale": 0.43},
-        "Omega_b": {"distribution": "uniform", "loc": 0.028, "scale": 0.027},
-        "h": {"distribution": "uniform", "loc": 0.64, "scale": 0.18},
-        "n_s": {"distribution": "uniform", "loc": 0.87, "scale": 0.2},
-    })
+    priors: Dict[str, Dict[str, float]] = field(
+        default_factory=lambda: {
+            "sigma8": {"distribution": "uniform", "loc": 0.6, "scale": 0.4},
+            "Omega_cdm": {"distribution": "uniform", "loc": 0.07, "scale": 0.43},
+            "Omega_b": {"distribution": "uniform", "loc": 0.028, "scale": 0.027},
+            "h": {"distribution": "uniform", "loc": 0.64, "scale": 0.18},
+            "n_s": {"distribution": "uniform", "loc": 0.87, "scale": 0.2},
+        }
+    )
 
     def __post_init__(self):
-        self.quant_gf = [load_pkl(self.path_quant, f"gf_{i}") for i in range(self.nz - 1)]
-        self.quant_pk = [load_pkl(self.path_quant, f"pklin_{i}") for i in range(self.nk)]
+        self.quant_gf = [
+            load_pkl(self.path_quant, f"gf_{i}") for i in range(self.nz - 1)
+        ]
+        self.quant_pk = [
+            load_pkl(self.path_quant, f"pklin_{i}") for i in range(self.nk)
+        ]
         self.zgrid = jnp.linspace(self.zmin, self.zmax, self.nz)
         self.kgrid = jnp.geomspace(self.kmin, self.kmax, self.nk)
+
 
 @dataclass
 class EMUCMBdata:
@@ -53,14 +62,25 @@ class EMUCMBdata:
 
     def __post_init__(self):
         # Load values from config
-        self.path_quant = "jax_cosmo/quantitiesCMB"  # Could also be moved to config if needed
+        self.path_quant = (
+            "jax_cosmo/quantitiesCMB"  # Could also be moved to config if needed
+        )
         self.ncomponents = 50
-        self.ellmax = 2500 # Default to 2500 if not in config
+        self.ellmax = 2500  # Default to 2500 if not in config
 
         # Load precomputed power spectra
-        self.quant_tt = [load_pkl(self.path_quant, f"cmb_cls_tt_{i}") for i in range(self.ncomponents)]
-        self.quant_te = [load_pkl(self.path_quant, f"cmb_cls_te_{i}") for i in range(self.ncomponents)]
-        self.quant_ee = [load_pkl(self.path_quant, f"cmb_cls_ee_{i}") for i in range(self.ncomponents)]
+        self.quant_tt = [
+            load_pkl(self.path_quant, f"cmb_cls_tt_{i}")
+            for i in range(self.ncomponents)
+        ]
+        self.quant_te = [
+            load_pkl(self.path_quant, f"cmb_cls_te_{i}")
+            for i in range(self.ncomponents)
+        ]
+        self.quant_ee = [
+            load_pkl(self.path_quant, f"cmb_cls_ee_{i}")
+            for i in range(self.ncomponents)
+        ]
 
         self.pipeline_tt = load_pkl("pipeline", "cmb_cls_tt")
         self.pipeline_te = load_pkl("pipeline", "cmb_cls_te")
@@ -211,7 +231,10 @@ def prediction_gf_jax(xtest: jnp.ndarray, quantities: list) -> jnp.ndarray:
     ypred = jnp.concatenate([jnp.ones(1), ypred])
     return ypred
 
-def prediction_cmb_cls(cosmology: jnp.ndarray, emudata: EMUCMBdata, cls_type: str = 'tt'):
+
+def prediction_cmb_cls(
+    cosmology: jnp.ndarray, emudata: EMUCMBdata, cls_type: str = "tt"
+):
     """Predicts the Cosmic Microwave Background (CMB) power spectrum using trained Gaussian Processes (GPs).
 
     Args:
@@ -222,17 +245,19 @@ def prediction_cmb_cls(cosmology: jnp.ndarray, emudata: EMUCMBdata, cls_type: st
     Returns:
         np.ndarray: Predicted CMB power spectrum for the given cosmology.
     """
-    if cls_type == 'tt':
+    if cls_type == "tt":
         quant = emudata.quant_tt
         pipeline = emudata.pipeline_tt
-    elif cls_type == 'te':
+    elif cls_type == "te":
         quant = emudata.quant_te
         pipeline = emudata.pipeline_te
-    elif cls_type == 'ee':
+    elif cls_type == "ee":
         quant = emudata.quant_ee
         pipeline = emudata.pipeline_ee
     else:
-        raise ValueError("Invalid CMB power spectrum type. Choose from 'tt', 'ee', 'te'.")
+        raise ValueError(
+            "Invalid CMB power spectrum type. Choose from 'tt', 'ee', 'te'."
+        )
 
     prediction = prediction_jax(cosmology, quant)
     prediction = pipeline.inverse_transform(prediction)

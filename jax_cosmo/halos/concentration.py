@@ -5,11 +5,13 @@ from typing import Union, Optional, Callable
 from jax_cosmo.core import Cosmology
 from jax_cosmo.background import growth_factor, growth_rate
 from jax_cosmo.power import dlogP_dlogk
-from jax_cosmo.halos.hmbase import (get_delta_c,
-                                    sigmaM,
-                                    mass2radius_lagrangian,
-                                    d_sigmaM_dlogM,
-                                    parse_mass_def)
+from jax_cosmo.halos.hmbase import (
+    get_delta_c,
+    sigmaM,
+    mass2radius_lagrangian,
+    d_sigmaM_dlogM,
+    parse_mass_def,
+)
 import optimistix as optx
 from interpax import Interpolator2D
 
@@ -31,6 +33,7 @@ class JAXConBhattacharya13:
     Args:
         mass_def (str, optional): Mass definition string. Defaults to "200c".
     """
+
     name: str = "Bhattacharya13"
 
     def __init__(self, mass_def: str = "200c") -> None:
@@ -52,7 +55,7 @@ class JAXConBhattacharya13:
         cosmology: Cosmology,
         mass: Union[float, jnp.ndarray],
         scale_factor: float,
-        interpolator: Interpolator2D
+        interpolator: Interpolator2D,
     ) -> jnp.ndarray:
         """
         Computes the concentration parameter given a cosmology and mass of halo.
@@ -74,6 +77,7 @@ class JAXConBhattacharya13:
 
         return self.A * gz**self.B * nu**self.C
 
+
 class JAXConConstant:
     """
     Constant concentration-mass relation.
@@ -89,6 +93,7 @@ class JAXConConstant:
         c (float, optional): Constant concentration value. Defaults to 1.
         mass_def (str, optional): Mass definition. Defaults to "200c".
     """
+
     name: str = "Constant"
 
     def __init__(self, c: float = 1.0, mass_def: str = "200c") -> None:
@@ -100,7 +105,7 @@ class JAXConConstant:
         cosmology: Cosmology,
         mass: Union[float, jnp.ndarray],
         scale_factor: float,
-        interpolator: Optional[Interpolator2D] = None
+        interpolator: Optional[Interpolator2D] = None,
     ) -> jnp.ndarray:
         """
         Computes the concentration parameter as a constant value.
@@ -116,6 +121,7 @@ class JAXConConstant:
             jnp.ndarray: Array of constant concentration values matching input mass shape.
         """
         return jnp.full_like(mass, self.c)
+
 
 class JAXConDiemer15:
     """
@@ -138,6 +144,7 @@ class JAXConDiemer15:
     Args:
         mass_def (str): Mass definition object or string. Defaults to "200c".
     """
+
     name: str = "Diemer15"
 
     def __init__(self, mass_def: str = "200c") -> None:
@@ -155,7 +162,7 @@ class JAXConDiemer15:
         cosmology: Cosmology,
         mass: Union[float, jnp.ndarray],
         scale_factor: float,
-        interpolator: Interpolator2D
+        interpolator: Interpolator2D,
     ) -> jnp.ndarray:
         """
         Computes the concentration parameter given a cosmology and halo mass.
@@ -171,7 +178,7 @@ class JAXConDiemer15:
         """
         radius = mass2radius_lagrangian(cosmology, mass)
         k_radius = 2.0 * jnp.pi / radius * self.kappa
-        logP_der = dlogP_dlogk(cosmology, k_radius/cosmology.h, scale_factor)
+        logP_der = dlogP_dlogk(cosmology, k_radius / cosmology.h, scale_factor)
 
         delta_c = get_delta_c(cosmology, scale_factor, method="EdS")
         log_mass = jnp.log10(mass)
@@ -180,8 +187,9 @@ class JAXConDiemer15:
 
         floor = self.phi_0 + logP_der * self.phi_1
         nu0 = self.eta_0 + logP_der * self.eta_1
-        conc = 0.5 * floor * ((nu0 / nu)**self.alpha + (nu / nu0)**self.beta)
+        conc = 0.5 * floor * ((nu0 / nu) ** self.alpha + (nu / nu0) ** self.beta)
         return conc
+
 
 class JAXConDuffy08:
     """
@@ -216,7 +224,9 @@ class JAXConDuffy08:
         }
 
         if mass_def not in param_map:
-            raise ValueError(f"Invalid mass definition '{mass_def}'. Must be one of {list(param_map.keys())}.")
+            raise ValueError(
+                f"Invalid mass definition '{mass_def}'. Must be one of {list(param_map.keys())}."
+            )
 
         self.A, self.B, self.C = param_map[mass_def]
 
@@ -242,6 +252,7 @@ class JAXConDuffy08:
         M_pivot_inv = cosmology.h * 5e-13  # Convert pivot mass to appropriate units
         return self.A * (mass * M_pivot_inv) ** self.B * scale_factor ** (-self.C)
 
+
 class JAXConKlypin11:
     """
     Implements the concentration-mass relation from Klypin et al. (2011).
@@ -258,11 +269,14 @@ class JAXConKlypin11:
     Raises:
         ValueError: If an unsupported mass definition is provided.
     """
-    name = 'Klypin11'
+
+    name = "Klypin11"
 
     def __init__(self, mass_def="vir"):
         if mass_def != "vir":
-            raise ValueError(f"Invalid mass definition '{mass_def}'. Only 'vir' is supported.")
+            raise ValueError(
+                f"Invalid mass definition '{mass_def}'. Only 'vir' is supported."
+            )
 
         self.mass_def = mass_def
 
@@ -285,7 +299,7 @@ class JAXConKlypin11:
         Returns:
             jnp.ndarray: Computed concentration parameter.
         """
-        M_pivot_inv = cosmology["h"] * 1E-12
+        M_pivot_inv = cosmology["h"] * 1e-12
         return 9.6 * (mass * M_pivot_inv) ** -0.075
 
 
@@ -316,7 +330,7 @@ class JAXConPrada12:
         >>> model = JAXConPrada12(mass_def="200c")
     """
 
-    name: str = 'Prada12'
+    name: str = "Prada12"
 
     def __init__(self, *, mass_def: str = "200c") -> None:
         """Initialize the Prada12 concentration-mass relation model.
@@ -339,26 +353,14 @@ class JAXConPrada12:
 
         # Compute normalization factors
         self.cnorm: float = 1.0 / self._cmin(
-            x=1.393,
-            x0=self.x0,
-            v0=self.c0,
-            v1=self.c1,
-            v2=self.al
+            x=1.393, x0=self.x0, v0=self.c0, v1=self.c1, v2=self.al
         )
 
         self.inorm: float = 1.0 / self._cmin(
-            x=1.393,
-            x0=self.x1,
-            v0=self.i0,
-            v1=self.i1,
-            v2=self.be
+            x=1.393, x0=self.x1, v0=self.i0, v1=self.i1, v2=self.be
         )
 
-    def _cmin(self, x: float,
-              x0: float,
-              v0: float,
-              v1: float,
-              v2: float) -> float:
+    def _cmin(self, x: float, x0: float, v0: float, v1: float, v2: float) -> float:
         """Compute the form factor for concentration and intensity.
 
         Args:
@@ -378,7 +380,7 @@ class JAXConPrada12:
         cosmology: Cosmology,
         mass: Union[float, jnp.ndarray],
         scale_factor: float,
-        interpolator: Interpolator2D
+        interpolator: Interpolator2D,
     ) -> jnp.ndarray:
         """
         Computes the concentration parameter given a cosmology and halo mass.
@@ -394,12 +396,13 @@ class JAXConPrada12:
         """
         log_mass = jnp.log10(mass)
         sigma_mass = sigmaM(log_mass, scale_factor, interpolator)
-        x = scale_factor * (cosmology.Omega_de / cosmology.Omega_m)**(1. / 3.)
+        x = scale_factor * (cosmology.Omega_de / cosmology.Omega_m) ** (1.0 / 3.0)
         b_factor_0 = self._cmin(x, self.x0, self.c0, self.c1, self.al) * self.cnorm
         b_factor_1 = self._cmin(x, self.x1, self.i0, self.i1, self.be) * self.inorm
         sig_p = b_factor_1 * sigma_mass
-        conc = 2.881 * ((sig_p / 1.257)**1.022 + 1) * jnp.exp(0.060 / sig_p**2)
+        conc = 2.881 * ((sig_p / 1.257) ** 1.022 + 1) * jnp.exp(0.060 / sig_p**2)
         return b_factor_0 * conc
+
 
 class JAXConIshiyama21:
     """Concentration-mass relation by Ishiyama et al. (2021).
@@ -433,7 +436,9 @@ class JAXConIshiyama21:
         (False, False, 500): (1.83, 1.95, 1.17, 3.57, 0.91, 0.26),
     }
 
-    def __init__(self, mass_def: str = "500c", relaxed: bool = False, Vmax: bool = False):
+    def __init__(
+        self, mass_def: str = "500c", relaxed: bool = False, Vmax: bool = False
+    ):
         """Initializes the concentration-mass relation model.
 
         Args:
@@ -454,7 +459,7 @@ class JAXConIshiyama21:
         cosmology: Cosmology,
         mass: Union[float, jnp.ndarray],
         scale_factor: float,
-        interpolator: Interpolator2D
+        interpolator: Interpolator2D,
     ) -> jnp.ndarray:
         """Computes the logarithmic derivative of sigma(M) with respect to mass.
 
@@ -484,7 +489,9 @@ class JAXConIshiyama21:
         f_quant = jnp.log(1.0 + x) - x / (1.0 + x)
         return x / f_quant ** ((5.0 + n_eff) / 6.0)
 
-    def solve_single(self, params: jnp.ndarray, arguments: tuple[jnp.ndarray, jnp.ndarray]) -> jnp.ndarray:
+    def solve_single(
+        self, params: jnp.ndarray, arguments: tuple[jnp.ndarray, jnp.ndarray]
+    ) -> jnp.ndarray:
         """Computes the residual function for root-finding.
 
         Args:
@@ -510,10 +517,11 @@ class JAXConIshiyama21:
         solver = optx.Newton(rtol=1e-8, atol=1e-8)
 
         # Vectorized root-finding
-        G_inv = jax.vmap(lambda v, n: optx.root_find(self.solve_single,
-                                                     solver,
-                                                     y0=jnp.ones_like(v),
-                                                     args=(v, n), throw=False).value)(val, n_eff)
+        G_inv = jax.vmap(
+            lambda v, n: optx.root_find(
+                self.solve_single, solver, y0=jnp.ones_like(v), args=(v, n), throw=False
+            ).value
+        )(val, n_eff)
         return G_inv
 
     def compute_concentration(
@@ -521,7 +529,7 @@ class JAXConIshiyama21:
         cosmology: Cosmology,
         mass: Union[float, jnp.ndarray],
         scale_factor: float,
-        interpolator: Interpolator2D
+        interpolator: Interpolator2D,
     ) -> jnp.ndarray:
         """Computes the concentration parameter given a cosmology and halo mass.
 

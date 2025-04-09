@@ -9,6 +9,8 @@ from jax_cosmo.cclconstants import PhysicalConstants
 __all__ = ["Cosmology"]
 
 CCLCST = PhysicalConstants()
+
+
 @register_pytree_node_class
 class Cosmology:
     def __init__(
@@ -70,7 +72,12 @@ class Cosmology:
         self._Neff = Neff
         # from CCL
         if Omega_g is None:
-            rho_g = 4 * CCLCST.STEFAN_BOLTZMANN_CONSTANT / CCLCST.LIGHT_SPEED**3 * CCLCST.T_CMB**4
+            rho_g = (
+                4
+                * CCLCST.STEFAN_BOLTZMANN_CONSTANT
+                / CCLCST.LIGHT_SPEED**3
+                * CCLCST.T_CMB**4
+            )
             rho_crit = CCLCST.RHO_CRITICAL * CCLCST.SOLAR_MASS_KG
             rho_crit = rho_crit / CCLCST.MPC_TO_METERS**3 * h**2
             self._Omega_g = rho_g / rho_crit

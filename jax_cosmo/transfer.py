@@ -7,6 +7,7 @@ import jax_cosmo.constants as const
 
 __all__ = ["Eisenstein_Hu", "BBKS"]
 
+
 def BBKS(cosmo: Cosmology, k: np.ndarray) -> np.ndarray:
     """
     Calculates the BBKS transfer function based on the cosmological parameters
@@ -37,9 +38,18 @@ def BBKS(cosmo: Cosmology, k: np.ndarray) -> np.ndarray:
     q_term = k / (cosmo.Omega_m * cosmo.h**2 * np.exp(power_term))
 
     # Compute the BBKS transfer function
-    transfer = (np.log(1.0 + 2.34 * q_term) / (2.34 * q_term) *
-                (1.0 + 3.89 * q_term + (16.2 * q_term)**2 +
-                 (5.47 * q_term)**3 + (6.71 * q_term)**4)**(-0.25))
+    transfer = (
+        np.log(1.0 + 2.34 * q_term)
+        / (2.34 * q_term)
+        * (
+            1.0
+            + 3.89 * q_term
+            + (16.2 * q_term) ** 2
+            + (5.47 * q_term) ** 3
+            + (6.71 * q_term) ** 4
+        )
+        ** (-0.25)
+    )
 
     return transfer * cosmo.h**3
 

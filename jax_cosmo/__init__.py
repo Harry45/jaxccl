@@ -16,6 +16,6 @@ import jax_cosmo.power as power
 import jax_cosmo.probes as probes
 import jax_cosmo.redshift as redshift
 import jax_cosmo.transfer as transfer
-import jax_cosmo.core as  jcore
+import jax_cosmo.core as jcore
 import jax_cosmo.parameters as jparam
 import jax_cosmo.sparse as sparse

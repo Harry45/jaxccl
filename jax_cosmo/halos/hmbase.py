@@ -1,6 +1,12 @@
 import jax
 import jax.numpy as jnp
-from jax_cosmo.cclconstants import PhysicalConstants, CCLSplineParams, CCLGSLParams, SPECIES_CRIT, SPECIES_M
+from jax_cosmo.cclconstants import (
+    PhysicalConstants,
+    CCLSplineParams,
+    CCLGSLParams,
+    SPECIES_CRIT,
+    SPECIES_M,
+)
 from jax_cosmo.core import Cosmology
 from typing import Union, Tuple, Callable
 from jax_cosmo.background import Esqr
@@ -12,6 +18,7 @@ import optimistix as optx
 CCLCST = PhysicalConstants()
 CCL_SPLINE_PARAMS = CCLSplineParams()
 CCL_GSL_PARAMS = CCLGSLParams()
+
 
 def omega_x(cosmo, a, label):
     """Computes the density parameter Omega_x at a given scale factor for a specified species.
@@ -40,7 +47,10 @@ def omega_x(cosmo, a, label):
         quantity_2 = 0.0  # Placeholder for potential neutrino contribution
         return quantity_1 + quantity_2
 
-def rho_x(cosmo: Cosmology, a: Union[float, jnp.ndarray], label: str) -> Union[float, jnp.ndarray]:
+
+def rho_x(
+    cosmo: Cosmology, a: Union[float, jnp.ndarray], label: str
+) -> Union[float, jnp.ndarray]:
     """Computes the physical density of a given component in the universe.
 
     This function calculates the density of a specified cosmological component
@@ -60,8 +70,9 @@ def rho_x(cosmo: Cosmology, a: Union[float, jnp.ndarray], label: str) -> Union[f
     return omega_x(cosmo, a, label) * rhocrit
 
 
-
-def mass2radius_lagrangian(cosmo: Cosmology, mass: Union[float, jnp.ndarray]) -> Union[float, jnp.ndarray]:
+def mass2radius_lagrangian(
+    cosmo: Cosmology, mass: Union[float, jnp.ndarray]
+) -> Union[float, jnp.ndarray]:
     """Computes the Lagrangian radius for a given halo mass.
 
     The Lagrangian radius is defined as the radius that encloses the given halo mass
@@ -75,15 +86,16 @@ def mass2radius_lagrangian(cosmo: Cosmology, mass: Union[float, jnp.ndarray]) ->
         Union[float, np.ndarray]: The corresponding Lagrangian radius in the same shape as `mass`.
     """
     mass_use = jnp.atleast_1d(mass)
-    rho_matter = rho_x(cosmo, 1.0, 'matter')  # Density of matter at a = 1
+    rho_matter = rho_x(cosmo, 1.0, "matter")  # Density of matter at a = 1
     radius_cube = mass_use / (4.0 / 3.0 * jnp.pi * rho_matter)
     radius = jnp.cbrt(radius_cube)  # Cube root to get radius
 
     return radius[0] if jnp.ndim(mass) == 0 else radius
 
 
-
-def get_delta_c(cosmo: Cosmology, scale_factor: float, method: str = "EdS") -> Union[float, jnp.ndarray]:
+def get_delta_c(
+    cosmo: Cosmology, scale_factor: float, method: str = "EdS"
+) -> Union[float, jnp.ndarray]:
     """
     Computes the linear collapse threshold, which represents the density contrast
     required for a region to collapse under self-gravity.
@@ -119,13 +131,16 @@ def get_delta_c(cosmo: Cosmology, scale_factor: float, method: str = "EdS") -> U
     elif method == "Mead16":
         omega_matter = omega_x(cosmo, scale_factor, "matter")
         sigma_8_scaled = cosmo.sigma8 * cosmo.growth_factor(scale_factor)
-        correction_sigma8 = (1.59 + 0.0314 * jnp.log(sigma_8_scaled))
-        correction_omega = (1 + 0.0123 * jnp.log10(omega_matter))
+        correction_sigma8 = 1.59 + 0.0314 * jnp.log(sigma_8_scaled)
+        correction_omega = 1 + 0.0123 * jnp.log10(omega_matter)
         return correction_sigma8 * correction_omega
     else:
         raise ValueError(f"Unknown collapse threshold method: {method}")
 
-def sigmaM_m2r(cosmo: Cosmology, halomass: Union[float, jnp.ndarray]) -> Union[float, jnp.ndarray]:
+
+def sigmaM_m2r(
+    cosmo: Cosmology, halomass: Union[float, jnp.ndarray]
+) -> Union[float, jnp.ndarray]:
     """Computes the smoothing radius corresponding to a given halo mass.
 
     The smoothing radius is defined as the Lagrangian radius enclosing the given halo
@@ -139,12 +154,13 @@ def sigmaM_m2r(cosmo: Cosmology, halomass: Union[float, jnp.ndarray]) -> Union[f
         Union[float, jnp.ndarray]: The smoothing radius in the same shape as `halomass`.
     """
     # Comoving matter density at a = 1
-    rho_m = rho_x(cosmo, 1.0, 'matter')
+    rho_m = rho_x(cosmo, 1.0, "matter")
 
     # Compute the smoothing radius
     smooth_radius = jnp.cbrt((3.0 * halomass) / (4.0 * jnp.pi * rho_m))
 
     return smooth_radius
+
 
 def generate_massfunc_name(delta: int, density_type: str) -> str:
     """Generates a standardized name for a mass function based on the overdensity and density type.
@@ -158,8 +174,11 @@ def generate_massfunc_name(delta: int, density_type: str) -> str:
     """
     return f"{delta}{density_type[0]}"
 
+
 class MassDefinition:
-    def __init__(self, overdensity: Union[float, str] = 200, density_type: str = "matter"):
+    def __init__(
+        self, overdensity: Union[float, str] = 200, density_type: str = "matter"
+    ):
 
         # these need to be improved for JAX compatibility (to be able to use with jit/grad/vmap)
 
@@ -170,7 +189,7 @@ class MassDefinition:
                 raise ValueError(f"Unknown Delta type {overdensity}.")
         if isinstance(overdensity, (int, float)) and overdensity < 0:
             raise ValueError("Delta must be a positive number.")
-        if density_type not in ['matter', 'critical']:
+        if density_type not in ["matter", "critical"]:
             raise ValueError("rho_type must be {'matter', 'critical'}.")
 
         if isinstance(overdensity, (int, float)):
@@ -194,7 +213,9 @@ class MassDefinition:
         """
         omega_matter = omega_x(cosmo, scale_factor, "matter")
         omega_deviation = omega_matter - 1
-        virial_overdensity = (18 * jnp.pi**2 + 82 * omega_deviation - 39 * omega_deviation**2)
+        virial_overdensity = (
+            18 * jnp.pi**2 + 82 * omega_deviation - 39 * omega_deviation**2
+        )
         return (
             virial_overdensity / omega_matter
             if self.density_type == "matter"
@@ -238,9 +259,9 @@ class MassDefinition:
         omega_matter = omega_x(cosmo, scale_factor, "matter")
         return overdensity_value * omega_target / omega_matter
 
-    def get_mass(self, cosmo: Cosmology,
-                 radius: Union[float, jnp.ndarray],
-                 scale_factor: float) -> Union[float, jnp.ndarray]:
+    def get_mass(
+        self, cosmo: Cosmology, radius: Union[float, jnp.ndarray], scale_factor: float
+    ) -> Union[float, jnp.ndarray]:
         """
         Translates a halo radius into a mass.
 
@@ -260,9 +281,9 @@ class MassDefinition:
             return float(mass[0])
         return mass
 
-    def get_radius(self, cosmo: Cosmology,
-                   mass: Union[float, jnp.ndarray],
-                   scale_factor: float) -> Union[float, jnp.ndarray]:
+    def get_radius(
+        self, cosmo: Cosmology, mass: Union[float, jnp.ndarray], scale_factor: float
+    ) -> Union[float, jnp.ndarray]:
         """
         Translates a halo mass into a radius.
 
@@ -277,7 +298,7 @@ class MassDefinition:
         mass_use = jnp.atleast_1d(mass)
         delta = self.get_overdensity(cosmo, scale_factor)
         rho_x_calc = rho_x(cosmo, scale_factor, self.density_type)
-        radius = (mass_use / (4.18879020479 * delta * rho_x_calc))**(1./3.)
+        radius = (mass_use / (4.18879020479 * delta * rho_x_calc)) ** (1.0 / 3.0)
         if jnp.ndim(mass) == 0:
             return float(radius[0])
         return radius
@@ -292,8 +313,9 @@ def mt_func(x: jnp.ndarray) -> jnp.ndarray:
     Returns:
         jnp.ndarray: Computed f(x) values.
     """
-    f_quant = x**3 / jnp.log(1+x) - x/(1+x)
+    f_quant = x**3 / jnp.log(1 + x) - x / (1 + x)
     return f_quant
+
 
 def mt_solve_single(params: jnp.ndarray, val: jnp.ndarray) -> jnp.ndarray:
     """Computes the residual function for root-finding.
@@ -307,6 +329,7 @@ def mt_solve_single(params: jnp.ndarray, val: jnp.ndarray) -> jnp.ndarray:
     """
     return mt_func(params) - val
 
+
 def mt_optimisation(vals: jnp.ndarray) -> jnp.ndarray:
     """Solves the root-finding problem for concentration using Newton's method.
 
@@ -317,16 +340,21 @@ def mt_optimisation(vals: jnp.ndarray) -> jnp.ndarray:
         jnp.ndarray: Optimized values (c_new).
     """
     solver = optx.Newton(rtol=1e-8, atol=1e-8)
-    cnew= optx.root_find(mt_solve_single, solver, y0=jnp.ones_like(vals), args=vals, throw=False).value
+    cnew = optx.root_find(
+        mt_solve_single, solver, y0=jnp.ones_like(vals), args=vals, throw=False
+    ).value
     return cnew
 
-def mass_translator(mass_in: MassDefinition,
-                    mass_out: MassDefinition,
-                    cosmo: Cosmology,
-                    scale_factor: float,
-                    mass,
-                    concentration,
-                    interpolator):
+
+def mass_translator(
+    mass_in: MassDefinition,
+    mass_out: MassDefinition,
+    cosmo: Cosmology,
+    scale_factor: float,
+    mass,
+    concentration,
+    interpolator,
+):
     """Translate between mass definitions, assuming an NFW profile.
 
     Returns a function that can be used to translate between halo
@@ -348,7 +376,7 @@ def mass_translator(mass_in: MassDefinition,
     if concentration.mass_def != mass_in.mass_def:
         raise ValueError("mass_def of concentration doesn't match mass_in")
 
-    # def translate(cosmo, mass, scale_factor, interpolator):
+        # def translate(cosmo, mass, scale_factor, interpolator):
         if mass_in == mass_out:
             return mass
 
@@ -362,7 +390,7 @@ def mass_translator(mass_in: MassDefinition,
     f_old = mt_func(c_in) * D_in / D_out
     c_out = mt_optimisation(f_old)
     # c_out = convert_concentration(cosmo, c_old=c_in, Delta_old=D_in, Delta_new=D_out)
-    R_out = R_in * c_out/c_in
+    R_out = R_in * c_out / c_in
     return mass_out.get_mass(cosmo, R_out, scale_factor)
 
     # return translate
@@ -393,6 +421,7 @@ def parse_mass_def(mass_def: Union[int, str]) -> Union[int, str]:
     else:
         raise ValueError("Invalid mass definition")
 
+
 def w_tophat(k_times_r: Union[float, jnp.ndarray]) -> Union[float, jnp.ndarray]:
     """Computes the top-hat window function in Fourier space.
 
@@ -404,25 +433,37 @@ def w_tophat(k_times_r: Union[float, jnp.ndarray]) -> Union[float, jnp.ndarray]:
     Returns:
         Union[float, jnp.ndarray]: The value of the top-hat window function.
     """
-    k_times_r_2 = k_times_r ** 2
+    k_times_r_2 = k_times_r**2
 
     # Maclaurin expansion for small kR to avoid numerical instabilities
     small_kR = k_times_r < 0.1
-    w_small = 1. + k_times_r_2 * (-1.0 / 10.0 + k_times_r_2 * (1.0 / 280.0 +
-                k_times_r_2 * (-1.0 / 15120.0 + k_times_r_2 * (1.0 / 1330560.0 +
-                k_times_r_2 * (-1.0 / 172972800.0)))))
+    w_small = 1.0 + k_times_r_2 * (
+        -1.0 / 10.0
+        + k_times_r_2
+        * (
+            1.0 / 280.0
+            + k_times_r_2
+            * (
+                -1.0 / 15120.0
+                + k_times_r_2 * (1.0 / 1330560.0 + k_times_r_2 * (-1.0 / 172972800.0))
+            )
+        )
+    )
 
     # General case
-    w_general = 3. * (jnp.sin(k_times_r) - k_times_r * jnp.cos(k_times_r)) / (k_times_r_2 * k_times_r)
+    w_general = (
+        3.0
+        * (jnp.sin(k_times_r) - k_times_r * jnp.cos(k_times_r))
+        / (k_times_r_2 * k_times_r)
+    )
 
     # Use JAX where for conditional branching
     return jnp.where(small_kR, w_small, w_general)
 
 
-def sigmaR_integrand(logk: Union[float, jnp.ndarray],
-                     cosmo: Cosmology,
-                     a: float,
-                     radius: float) -> Union[float, jnp.ndarray]:
+def sigmaR_integrand(
+    logk: Union[float, jnp.ndarray], cosmo: Cosmology, a: float, radius: float
+) -> Union[float, jnp.ndarray]:
     """Computes the integrand for the sigma_R calculation.
 
     Args:
@@ -434,15 +475,16 @@ def sigmaR_integrand(logk: Union[float, jnp.ndarray],
     Returns:
         Union[float, jnp.ndarray]: The value of the integrand.
     """
-    wavenumber = 10. ** logk  # Convert log10(k) back to k
+    wavenumber = 10.0**logk  # Convert log10(k) back to k
     if jcp.USE_EMU:
         pk_lin = jcp.linear_matter_power_emu(cosmo, wavenumber, a)
     else:
-        pk_lin = jcp.linear_matter_power(cosmo, wavenumber, a) # Get power spectrum
+        pk_lin = jcp.linear_matter_power(cosmo, wavenumber, a)  # Get power spectrum
     k_times_r = wavenumber * radius
     w_kernel = w_tophat(k_times_r)
 
     return pk_lin * wavenumber**3 * w_kernel**2  # k^3 weighting for integral
+
 
 def sigmaR(cosmo: Cosmology, radius: float, a: float) -> float:
     """
@@ -456,6 +498,7 @@ def sigmaR(cosmo: Cosmology, radius: float, a: float) -> float:
     Returns:
         float: The square root of the variance sigma(R).
     """
+
     # Define the integrand function
     def integrand(log_k):
         return sigmaR_integrand(log_k, cosmo, a, radius)
@@ -473,6 +516,7 @@ def sigmaR(cosmo: Cosmology, radius: float, a: float) -> float:
 
     # Compute final sigma_R
     return jnp.sqrt(sigma_R * jnp.log(10) / (2 * jnp.pi**2))
+
 
 def compute_sigma(cosmo: Cosmology):
     """Computes the variance of the matter density field (sigma) on a grid of mass and scale factor values.
@@ -493,36 +537,48 @@ def compute_sigma(cosmo: Cosmology):
     num_m = CCL_SPLINE_PARAMS.LOGM_SPLINE_NM
 
     # Log-spaced mass array
-    log_mass = jnp.linspace(CCL_SPLINE_PARAMS.LOGM_SPLINE_MIN,
-                            CCL_SPLINE_PARAMS.LOGM_SPLINE_MAX, num_m)
+    log_mass = jnp.linspace(
+        CCL_SPLINE_PARAMS.LOGM_SPLINE_MIN, CCL_SPLINE_PARAMS.LOGM_SPLINE_MAX, num_m
+    )
 
     # Log-linear spaced scale factor array
-    scale_factors = jnp.concatenate([
-        jnp.geomspace(CCL_SPLINE_PARAMS.A_SPLINE_MINLOG_SM,
-                      CCL_SPLINE_PARAMS.A_SPLINE_MIN_SM,
-                      CCL_SPLINE_PARAMS.A_SPLINE_NLOG_SM),
-        jnp.linspace(CCL_SPLINE_PARAMS.A_SPLINE_MIN_SM,
-                     CCL_SPLINE_PARAMS.A_SPLINE_MAX,
-                     CCL_SPLINE_PARAMS.A_SPLINE_NA_SM)
-    ])
+    scale_factors = jnp.concatenate(
+        [
+            jnp.geomspace(
+                CCL_SPLINE_PARAMS.A_SPLINE_MINLOG_SM,
+                CCL_SPLINE_PARAMS.A_SPLINE_MIN_SM,
+                CCL_SPLINE_PARAMS.A_SPLINE_NLOG_SM,
+            ),
+            jnp.linspace(
+                CCL_SPLINE_PARAMS.A_SPLINE_MIN_SM,
+                CCL_SPLINE_PARAMS.A_SPLINE_MAX,
+                CCL_SPLINE_PARAMS.A_SPLINE_NA_SM,
+            ),
+        ]
+    )
 
     # Compute sigma
     def compute_sigma_element(log_m, a_sf):
-        radius = sigmaM_m2r(cosmo, 10 ** log_m) * cosmo.h
+        radius = sigmaM_m2r(cosmo, 10**log_m) * cosmo.h
         return jnp.log(sigmaR(cosmo, radius, a_sf))
 
     # Compute sigma on a grid
     log_m_grid, a_grid = jnp.meshgrid(log_mass, scale_factors, indexing="ij")
-    func = jax.vmap(lambda a: jax.vmap(lambda log_m: compute_sigma_element(log_m, a))(log_mass))(scale_factors)
+    func = jax.vmap(
+        lambda a: jax.vmap(lambda log_m: compute_sigma_element(log_m, a))(log_mass)
+    )(scale_factors)
     func = func.squeeze().T
 
     # Create 2D interpolator
-    interpolator = Interpolator2D(x=log_mass, y=scale_factors, f=func, method='cubic2')
+    interpolator = Interpolator2D(x=log_mass, y=scale_factors, f=func, method="cubic2")
     return interpolator
 
-def sigmaM(log_halomass: jnp.ndarray,
-           a: Union[float, jnp.ndarray],
-           interpolator: Interpolator2D) -> jnp.ndarray:
+
+def sigmaM(
+    log_halomass: jnp.ndarray,
+    a: Union[float, jnp.ndarray],
+    interpolator: Interpolator2D,
+) -> jnp.ndarray:
     """Computes the variance of the matter density field (sigma) for given halo masses and scale factors.
 
     Args:
@@ -537,9 +593,12 @@ def sigmaM(log_halomass: jnp.ndarray,
     lgsigmaM = interpolator(log_halomass, a)
     return jnp.exp(lgsigmaM)
 
-def logsigmaM(log_halomass: jnp.ndarray,
-              a: Union[float, jnp.ndarray],
-              interpolator: Interpolator2D) -> jnp.ndarray:
+
+def logsigmaM(
+    log_halomass: jnp.ndarray,
+    a: Union[float, jnp.ndarray],
+    interpolator: Interpolator2D,
+) -> jnp.ndarray:
     """Computes the logarithm of the variance of the matter density field (sigma) for given halo masses and scale factors.
 
     Args:
@@ -552,9 +611,12 @@ def logsigmaM(log_halomass: jnp.ndarray,
     """
     return interpolator(log_halomass, a)
 
-def d_sigmaM_dlogM(log_halomass: jnp.ndarray,
-                   a: Union[float, jnp.ndarray],
-                   interpolator: Interpolator2D) -> jnp.ndarray:
+
+def d_sigmaM_dlogM(
+    log_halomass: jnp.ndarray,
+    a: Union[float, jnp.ndarray],
+    interpolator: Interpolator2D,
+) -> jnp.ndarray:
     """Computes the derivative of sigma with respect to log mass.
 
     Args:
@@ -572,10 +634,13 @@ def d_sigmaM_dlogM(log_halomass: jnp.ndarray,
     d_sigmaM_dlogM_vec = jax.vmap(d_sigmaM_dlogM_fn, in_axes=(0, None, None))
     return -d_sigmaM_dlogM_vec(log_halomass, a, interpolator)
 
-def get_logM_sigM(cosmo: Cosmology,
-                  mass: jnp.ndarray,
-                  a: Union[float, jnp.ndarray],
-                  interpolator: Interpolator2D=None) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+
+def get_logM_sigM(
+    cosmo: Cosmology,
+    mass: jnp.ndarray,
+    a: Union[float, jnp.ndarray],
+    interpolator: Interpolator2D = None,
+) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     """Computes log-mass, sigma mass, and its derivative.
 
     Args:
@@ -594,11 +659,14 @@ def get_logM_sigM(cosmo: Cosmology,
     dlns_dlogM = d_sigmaM_dlogM(log_mass, a, interpolator)
     return log_mass, sigma_mass, dlns_dlogM
 
-def calculate_mass_function(cosmo: Cosmology,
-                            mass: jnp.ndarray,
-                            a: Union[float, jnp.ndarray],
-                            hmfunc: Callable,
-                            interpolator: Interpolator2D=None) -> Tuple[jnp.ndarray, jnp.ndarray]:
+
+def calculate_mass_function(
+    cosmo: Cosmology,
+    mass: jnp.ndarray,
+    a: Union[float, jnp.ndarray],
+    hmfunc: Callable,
+    interpolator: Interpolator2D = None,
+) -> Tuple[jnp.ndarray, jnp.ndarray]:
     """Calculates the halo mass function.
 
     Args:

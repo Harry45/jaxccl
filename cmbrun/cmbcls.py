@@ -42,9 +42,24 @@ def get_config(experiment) -> ConfigDict:
 
     # priors
     config.priors = {
-        "sigma8": {"distribution": "uniform", "loc": 0.7, "scale": 0.2, "fiducial": 0.8},
-        "Omega_cdm": {"distribution": "uniform", "loc": 0.20, "scale": 0.15, "fiducial": 0.2},
-        "Omega_b": {"distribution": "uniform", "loc": 0.04, "scale": 0.02, "fiducial": 0.045},
+        "sigma8": {
+            "distribution": "uniform",
+            "loc": 0.7,
+            "scale": 0.2,
+            "fiducial": 0.8,
+        },
+        "Omega_cdm": {
+            "distribution": "uniform",
+            "loc": 0.20,
+            "scale": 0.15,
+            "fiducial": 0.2,
+        },
+        "Omega_b": {
+            "distribution": "uniform",
+            "loc": 0.04,
+            "scale": 0.02,
+            "fiducial": 0.045,
+        },
         "h": {"distribution": "uniform", "loc": 0.62, "scale": 0.12, "fiducial": 0.68},
         "n_s": {"distribution": "uniform", "loc": 0.90, "scale": 0.2, "fiducial": 1.0},
     }
@@ -59,6 +74,7 @@ def get_config(experiment) -> ConfigDict:
 
     return config
 
+
 def class_args(config: ConfigDict) -> Dict:
     """Generates CLASS arguments to be passed to classy to compute the different quantities.
     Args:
@@ -67,10 +83,11 @@ def class_args(config: ConfigDict) -> Dict:
         dict: A dictionary to input to class
     """
     dictionary = dict()
-    dictionary['output'] = config.classy.output
-    dictionary['P_k_max_1/Mpc'] = config.classy.k_max_pk
-    dictionary['Omega_k'] = config.classy.Omega_k
+    dictionary["output"] = config.classy.output
+    dictionary["P_k_max_1/Mpc"] = config.classy.k_max_pk
+    dictionary["Omega_k"] = config.classy.Omega_k
     return dictionary
+
 
 def neutrino_args(config: ConfigDict) -> Dict:
     """Generates a dictionary for the neutrino settings.
@@ -80,12 +97,13 @@ def neutrino_args(config: ConfigDict) -> Dict:
         dict: A dictionary with the neutrino parameters.
     """
     dictionary = dict()
-    dictionary['N_ncdm'] = config.neutrino.N_ncdm
-    dictionary['deg_ncdm'] = config.neutrino.deg_ncdm
-    dictionary['T_ncdm'] = config.neutrino.T_ncdm
-    dictionary['N_ur'] = config.neutrino.N_ur
-    dictionary['m_ncdm'] = config.neutrino.fixed_nm / config.neutrino.deg_ncdm
+    dictionary["N_ncdm"] = config.neutrino.N_ncdm
+    dictionary["deg_ncdm"] = config.neutrino.deg_ncdm
+    dictionary["T_ncdm"] = config.neutrino.T_ncdm
+    dictionary["N_ur"] = config.neutrino.N_ur
+    dictionary["m_ncdm"] = config.neutrino.fixed_nm / config.neutrino.deg_ncdm
     return dictionary
+
 
 def delete_module(class_module: Class):
     """Deletes the module to prevent memory overflow.
@@ -97,6 +115,7 @@ def delete_module(class_module: Class):
     class_module.empty()
 
     del class_module
+
 
 def class_compute(config: ConfigDict, cosmology: Dict) -> Class:
     """Pre-computes the quantities in CLASS.
@@ -119,7 +138,10 @@ def class_compute(config: ConfigDict, cosmology: Dict) -> Class:
 
     return class_module
 
-def calculate_cmb_cls_class(cosmology: Dict, cfg: ConfigDict, ellmax: int = 2500) -> np.ndarray:
+
+def calculate_cmb_cls_class(
+    cosmology: Dict, cfg: ConfigDict, ellmax: int = 2500
+) -> np.ndarray:
     """Calculate the linear matter power spectrum using CLASS.
 
     Args:
@@ -132,14 +154,15 @@ def calculate_cmb_cls_class(cosmology: Dict, cfg: ConfigDict, ellmax: int = 2500
     """
     cmodule = class_compute(cfg, cosmology)
     cells = cmodule.raw_cl(ellmax)
-    factor = 2.7255e6 ** 2 * cells['ell'] * (cells['ell'] + 1) / (2 * np.pi)
-    cls_tt = cells['tt'] * factor
-    cls_ee = cells['ee'] * factor
-    cls_te = cells['te'] * factor
+    factor = 2.7255e6**2 * cells["ell"] * (cells["ell"] + 1) / (2 * np.pi)
+    cls_tt = cells["tt"] * factor
+    cls_ee = cells["ee"] * factor
+    cls_te = cells["te"] * factor
     delete_module(cmodule)
-    return cells['ell'][2:], cls_tt[2:], cls_ee[2:], cls_te[2:]
+    return cells["ell"][2:], cls_tt[2:], cls_ee[2:], cls_te[2:]
 
-def compute_cmb_gradients(cosmology: np.ndarray, cfg, eps=1E-2):
+
+def compute_cmb_gradients(cosmology: np.ndarray, cfg, eps=1e-2):
     """Computes the first derivative of each CMB power spectrum (TT, EE, TE)
     with respect to each cosmological parameter using finite difference.
 
@@ -155,7 +178,7 @@ def compute_cmb_gradients(cosmology: np.ndarray, cfg, eps=1E-2):
             - The last dimension corresponds to TT, EE, and TE derivatives.
     """
     num_params = len(cfg.cosmo.names)
-    num_ells = 2500-1
+    num_ells = 2500 - 1
 
     # Initialize gradient arrays
     gradients = np.zeros((num_ells, num_params, 3))  # TT, EE, TE derivatives
@@ -171,12 +194,18 @@ def compute_cmb_gradients(cosmology: np.ndarray, cfg, eps=1E-2):
         cosmo_dict_perturbed[name] += delta  # Forward step
 
         # Compute perturbed power spectra
-        _, cls_tt_pert, cls_ee_pert, cls_te_pert = calculate_cmb_cls_class(cosmo_dict_perturbed, cfg)
+        _, cls_tt_pert, cls_ee_pert, cls_te_pert = calculate_cmb_cls_class(
+            cosmo_dict_perturbed, cfg
+        )
 
         # Compute finite difference derivative
         gradients[:, i, 0] = (cls_tt_pert - cls_tt_fid) / delta  # dC_ell^TT / dparam
         gradients[:, i, 1] = (cls_ee_pert - cls_ee_fid) / delta  # dC_ell^EE / dparam
         gradients[:, i, 2] = (cls_te_pert - cls_te_fid) / delta  # dC_ell^TE / dparam
 
-    grad = {'tt': gradients[:,:,0], 'ee': gradients[:,:,1], 'te': gradients[:,:,2]}
+    grad = {
+        "tt": gradients[:, :, 0],
+        "ee": gradients[:, :, 1],
+        "te": gradients[:, :, 2],
+    }
     return grad

@@ -26,7 +26,7 @@ __all__ = [
     "growth_factor",
     "growth_rate",
     "distance_modulus",
-    "luminosity_distance"
+    "luminosity_distance",
 ]
 
 
@@ -48,6 +48,7 @@ def w(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarray]
         $w(a) = w_0 + w_a (1 - a)$
     """
     return cosmo.w0 + (1.0 - a) * cosmo.wa
+
 
 def f_de(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
     r"""Computes the evolution parameter for the Dark Energy density.
@@ -118,7 +119,6 @@ def Esqr(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarr
     )
 
 
-
 def H(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
     r"""
     Computes the Hubble parameter $H(a)$ at a given scale factor $a$.
@@ -143,7 +143,9 @@ def H(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarray]
     return const.H0 * np.sqrt(Esqr(cosmo, a))
 
 
-def Omega_m_a(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+def Omega_m_a(
+    cosmo: Cosmology, a: Union[float, np.ndarray]
+) -> Union[float, np.ndarray]:
     r"""
     Computes the non-relativistic matter density $\Omega_m(a)$ at a given scale factor $a$.
 
@@ -168,7 +170,9 @@ def Omega_m_a(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.
     return cosmo.Omega_m * np.power(a, -3) / Esqr(cosmo, a)
 
 
-def Omega_de_a(cosmo: Cosmology, a: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+def Omega_de_a(
+    cosmo: Cosmology, a: Union[float, np.ndarray]
+) -> Union[float, np.ndarray]:
     r"""
     Computes the Dark Energy density $\Omega_{de}(a)$ at a given scale factor $a$.
 
@@ -199,7 +203,7 @@ def radial_comoving_distance(
     cosmo: Cosmology,
     a: Union[float, np.ndarray],
     log10_amin: float = -4,
-    steps: int = 512
+    steps: int = 512,
 ) -> Union[float, np.ndarray]:
     r"""
     Computes the radial comoving distance $\chi(a)$ at a given scale factor $a$.
@@ -249,11 +253,12 @@ def radial_comoving_distance(
     # Return the results as an interpolation of the table
     return np.clip(interp(a, cache["a"], cache["chi"]), 0.0)
 
+
 def luminosity_distance(
     cosmo: Cosmology,
     a: Union[float, np.ndarray],
     log10_amin: float = -4,
-    steps: int = 512
+    steps: int = 512,
 ) -> Union[float, np.ndarray]:
     r"""
     Computes the luminosity distance for a given cosmological model and scale factor.
@@ -320,9 +325,9 @@ def distance_modulus(
     lum_dist = luminosity_distance(cosmo, a, log10_amin, steps)
     return 5.0 * np.log10(lum_dist * 10) + 20.0
 
+
 def a_of_chi(
-    cosmo: Cosmology,
-    chi: Union[float, np.ndarray]
+    cosmo: Cosmology, chi: Union[float, np.ndarray]
 ) -> Union[float, np.ndarray]:
     r"""
     Computes the scale factor corresponding to a given radial comoving distance $\chi$
@@ -352,8 +357,7 @@ def a_of_chi(
 
 
 def dchioverda(
-    cosmo: Cosmology,
-    a: Union[float, np.ndarray]
+    cosmo: Cosmology, a: Union[float, np.ndarray]
 ) -> Union[float, np.ndarray]:
     r"""
     Computes the derivative of the radial comoving distance with respect to the scale factor.
@@ -380,8 +384,7 @@ def dchioverda(
 
 
 def transverse_comoving_distance(
-    cosmo: Cosmology,
-    a: Union[float, np.ndarray]
+    cosmo: Cosmology, a: Union[float, np.ndarray]
 ) -> Union[float, np.ndarray]:
     r"""
     Computes the transverse comoving distance for a given cosmological model and scale factor.
@@ -433,8 +436,7 @@ def transverse_comoving_distance(
 
 
 def angular_diameter_distance(
-    cosmo: Cosmology,
-    a: Union[float, np.ndarray]
+    cosmo: Cosmology, a: Union[float, np.ndarray]
 ) -> Union[float, np.ndarray]:
     r"""
     Computes the angular diameter distance for a given cosmological model and scale factor.
@@ -466,8 +468,7 @@ def angular_diameter_distance(
 
 
 def growth_factor(
-    cosmo: Cosmology,
-    a: Union[float, np.ndarray]
+    cosmo: Cosmology, a: Union[float, np.ndarray]
 ) -> Union[float, np.ndarray]:
     r"""
     Computes the linear growth factor $D(a)$ at a given scale factor,
@@ -496,8 +497,7 @@ def growth_factor(
 
 
 def growth_rate(
-    cosmo: Cosmology,
-    a: Union[float, np.ndarray]
+    cosmo: Cosmology, a: Union[float, np.ndarray]
 ) -> Union[float, np.ndarray]:
     r"""
     Computes the growth rate $dD/d\ln a$ at a given scale factor.
@@ -548,7 +548,6 @@ def grad_H(cosmo: Cosmology, a: Union[float, np.ndarray]) -> np.ndarray:
     return grad(H, argnums=1)(cosmo, a)
 
 
-
 def alpha_beta(cosmo: Cosmology, a: Union[float, np.ndarray]) -> np.ndarray:
     """Calculates the matrix which maps the first derivative and the answer we want, that is,
     $$
@@ -579,7 +578,7 @@ def _growth_factor_ODE(
     a: Union[float, np.ndarray],
     log10_amin: float = -3,
     steps: int = 128,
-    eps: float = 1e-4
+    eps: float = 1e-4,
 ) -> Union[float, np.ndarray]:
     r"""
     Computes the linear growth factor $D(a)$ at a given scale factor,
@@ -640,8 +639,7 @@ def _growth_factor_ODE(
 
 
 def _growth_rate_ODE(
-    cosmo: Cosmology,
-    a: Union[float, np.ndarray]
+    cosmo: Cosmology, a: Union[float, np.ndarray]
 ) -> Union[float, np.ndarray]:
     r"""
     Computes the growth rate $dD/d\ln(a)$ at a given scale factor by solving the
@@ -680,7 +678,7 @@ def _growth_factor_gamma(
     cosmo: Cosmology,
     a: Union[float, np.ndarray],
     log10_amin: float = -3,
-    steps: int = 128
+    steps: int = 128,
 ) -> Union[float, np.ndarray]:
     r"""
     Computes the growth factor by integrating the growth rate provided by the
@@ -729,8 +727,7 @@ def _growth_factor_gamma(
 
 
 def _growth_rate_gamma(
-    cosmo: Cosmology,
-    a: Union[float, np.ndarray]
+    cosmo: Cosmology, a: Union[float, np.ndarray]
 ) -> Union[float, np.ndarray]:
     r"""
     Computes the growth rate approximation at the given scale factor, $a$.

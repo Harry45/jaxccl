@@ -13,6 +13,7 @@ from cmbrun.cmbcls import calculate_cmb_cls_class
 from torchemu.gaussianprocess import GaussianProcess
 from jax_cosmo.utils import load_pkl, save_pkl
 
+
 def generate_cosmo_priors(cfg: ConfigDict) -> Dict:
     """Generate cosmological priors based on the configuration settings.
 
@@ -29,7 +30,10 @@ def generate_cosmo_priors(cfg: ConfigDict) -> Dict:
         dictionary[name] = getattr(ss, param.distribution)(*specs)
     return dictionary
 
-def generate_inputs(lhs: pd.DataFrame, priors: Dict, save: bool = False, fname: str = 'cosmo_cmb') -> pd.DataFrame:
+
+def generate_inputs(
+    lhs: pd.DataFrame, priors: Dict, save: bool = False, fname: str = "cosmo_cmb"
+) -> pd.DataFrame:
     """Generate the input training points (the cosmologies).
 
     This function scales the Latin hypercube samples according to the prior range of the cosmological parameters.
@@ -49,13 +53,14 @@ def generate_inputs(lhs: pd.DataFrame, priors: Dict, save: bool = False, fname: 
         cosmologies[p] = priors[p].ppf(lhs.iloc[:, i].values)
     cosmologies = pd.DataFrame(cosmologies)
     if save:
-        os.makedirs('data', exist_ok=True)
-        cosmologies.to_csv(f'data/{fname}.csv')
+        os.makedirs("data", exist_ok=True)
+        cosmologies.to_csv(f"data/{fname}.csv")
     return cosmologies
 
-def generate_cmb_cls_outputs(cosmologies: pd.DataFrame,
-                     cfg: ConfigDict,
-                     save: bool = False) -> Tuple[pd.DataFrame, pd.DataFrame]:
+
+def generate_cmb_cls_outputs(
+    cosmologies: pd.DataFrame, cfg: ConfigDict, save: bool = False
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     ncosmo = cosmologies.shape[0]
     record_tt = []
     record_ee = []
@@ -71,17 +76,20 @@ def generate_cmb_cls_outputs(cosmologies: pd.DataFrame,
     record_ee = pd.DataFrame(record_ee, columns=ells)
     record_te = pd.DataFrame(record_te, columns=ells)
     if save:
-        record_tt.to_csv('data/cmb_cls_tt.csv')
-        record_ee.to_csv('data/cmb_cls_ee.csv')
-        record_te.to_csv('data/cmb_cls_te.csv')
+        record_tt.to_csv("data/cmb_cls_tt.csv")
+        record_ee.to_csv("data/cmb_cls_ee.csv")
+        record_te.to_csv("data/cmb_cls_te.csv")
     return record_tt, record_te, record_ee
 
-def train_gps(config: ConfigDict,
-              cosmologies: torch.Tensor,
-              outputs: torch.Tensor,
-              prewhiten: bool,
-              ylog: bool,
-              fname: str='cmb_cls_tt_0') -> List:
+
+def train_gps(
+    config: ConfigDict,
+    cosmologies: torch.Tensor,
+    outputs: torch.Tensor,
+    prewhiten: bool,
+    ylog: bool,
+    fname: str = "cmb_cls_tt_0",
+) -> List:
     """Train Gaussian Processes (GPs) for the given cosmologies and outputs.
 
     This function optimizes the kernel parameters for each output dimension and saves the trained GP models.
@@ -103,21 +111,22 @@ def train_gps(config: ConfigDict,
     for i in range(nout):
 
         # optimise for the kernel parameters
-        gpmodule = GaussianProcess(config,
-                                   cosmologies,
-                                   outputs[:, i],
-                                   prewhiten=prewhiten,
-                                   ylog=ylog)
+        gpmodule = GaussianProcess(
+            config, cosmologies, outputs[:, i], prewhiten=prewhiten, ylog=ylog
+        )
         parameters = torch.randn(6)
-        opt_params = gpmodule.optimisation(parameters,
-                                           niter=config.emu.niter,
-                                           lrate=config.emu.lr,
-                                           nrestart=config.emu.nrestart)
+        opt_params = gpmodule.optimisation(
+            parameters,
+            niter=config.emu.niter,
+            lrate=config.emu.lr,
+            nrestart=config.emu.nrestart,
+        )
 
         # save the gps and quantities
-        save_pkl(gpmodule, 'gps', fname + f'_{i}')
+        save_pkl(gpmodule, "gps", fname + f"_{i}")
         record.append(gpmodule)
     return record
+
 
 class JAXPreprocessingPipeline:
     def __init__(self, n_components=50, epsilon=1e-6, apply_log=False):
@@ -142,7 +151,9 @@ class JAXPreprocessingPipeline:
         """
         # Step 1: Apply log-transformation (if enabled)
         if self.apply_log:
-            self.shift_ = jnp.abs(jnp.min(X)) + 1 if jnp.min(X) <= 0 else 0  # Shift for non-negative log
+            self.shift_ = (
+                jnp.abs(jnp.min(X)) + 1 if jnp.min(X) <= 0 else 0
+            )  # Shift for non-negative log
             X = jnp.log(X + self.shift_)
 
         # Step 2: Compute column-wise means and standard deviations
@@ -152,14 +163,14 @@ class JAXPreprocessingPipeline:
 
         # Step 3: Apply PCA using SVD
         U, S, Vt = jnp.linalg.svd(X_scaled, full_matrices=False)
-        self.components_ = Vt[:self.n_components]  # Top principal components
+        self.components_ = Vt[: self.n_components]  # Top principal components
         X_reduced = jnp.dot(X_scaled, self.components_.T)
 
         # Step 4: Compute covariance of reduced data and prewhiten
         cov_matrix = jnp.cov(X_reduced, rowvar=False)
         cov_matrix += jnp.eye(cov_matrix.shape[0]) * self.epsilon  # Regularization
         self.L_ = jnp.linalg.cholesky(cov_matrix)  # Cholesky decomposition
-        self.L_inv_ = jnp.linalg.inv(self.L_)      # Inverse of Cholesky factor
+        self.L_inv_ = jnp.linalg.inv(self.L_)  # Inverse of Cholesky factor
 
         return self
 
