@@ -197,7 +197,7 @@ class HaloBiasTinker10:
         self.bias_coefficient = 0.183
         self.exponent_b = 1.5
         self.exponent_c = 2.4
-        self.critical_density = get_delta_c(None, None, kind="EdS")
+        self.critical_density = get_delta_c(None, None, method="EdS")
         self.mass_definition = MassDefinition(overdensity, density_type)
 
     def compute_bias(

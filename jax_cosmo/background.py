@@ -11,6 +11,11 @@ from jax_cosmo.scipy.interpolate import interp
 from jax_cosmo.scipy.ode import odeint
 from jax_cosmo.utils import z2a
 from jax_cosmo.core import Cosmology
+from jax_cosmo.cclconstants import PhysicalConstants, CCLSplineParams, CCLGSLParams
+
+CCLCST = PhysicalConstants()
+CCL_SPLINE_PARAMS = CCLSplineParams()
+CCL_GSL_PARAMS = CCLGSLParams()
 
 __all__ = [
     "w",
@@ -778,3 +783,29 @@ def scale_of_chi(
     chi_arr = np.linspace(chi_min, chi_max, n_z)
     a_arr = a_of_chi(cosmo, chi_arr)
     return a_arr, chi_arr
+
+
+def comoving_volume_element(
+    cosmo: Cosmology, a: Union[float, np.ndarray]
+) -> np.ndarray:
+    """Compute the comoving volume element per unit scale factor and solid angle.
+
+    This calculates the differential comoving volume element
+    $\\mathrm{d}V / (\\mathrm{d}a \\mathrm{d}\\Omega)$ in units of
+    $\\mathrm{Mpc}^3 \\mathrm{sr}^{-1}$.
+
+    Args:
+        cosmo (Cosmology): Cosmology object containing the cosmological parameters.
+        a (Union[float, np.ndarray]): Scale factor(s), normalized to 1 today.
+
+    Returns:
+        np.ndarray: Comoving volume element per unit scale factor and per unit solid angle,
+        same shape as input `a`.
+
+    See Also:
+        comoving_volume: Function computing the integral of the comoving volume element.
+    """
+    Dm = transverse_comoving_distance(cosmo, a) / cosmo.h
+    Ez = np.sqrt(Esqr(cosmo, a))
+    Dh = CCLCST.LIGHT_SPEED_H0_MPC / cosmo.h
+    return Dh * Dm**2 / (Ez * a**2)
